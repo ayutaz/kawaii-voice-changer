@@ -33,7 +33,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libportaudio2 libsndfile1
+        sudo apt-get install -y libportaudio2 libsndfile1 libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 xvfb
 
     - name: Install system dependencies (macOS)
       if: matrix.os == 'macos-latest'
@@ -53,7 +53,15 @@ jobs:
       run: |
         uv run mypy src
 
-    - name: Test with pytest
+    - name: Test with pytest (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        export DISPLAY=:99
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
+    
+    - name: Test with pytest (Windows/macOS)
+      if: matrix.os != 'ubuntu-latest'
       run: |
         uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
 
@@ -89,8 +97,9 @@ jobs:
     - name: Security check with bandit
       run: uv run bandit -r src -f json -o bandit-report.json || true
     
-    - name: Dependency security check
-      run: uv run safety check --json || true
+    # Safety check is temporarily disabled due to API issues
+    # - name: Dependency security check
+    #   run: uv run safety check --json || true
 
   build:
     needs: [test, code-quality]
@@ -129,7 +138,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libportaudio2 libsndfile1 libasound2-dev
+        sudo apt-get install -y libportaudio2 libsndfile1 libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 xvfb libasound2-dev
     
     - name: Install system dependencies (macOS)
       if: matrix.os == 'macos-latest'

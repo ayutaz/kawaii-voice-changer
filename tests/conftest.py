@@ -1,9 +1,14 @@
 """Pytest configuration and fixtures."""
 
+import os
 from pathlib import Path
 
 import numpy as np
 import pytest
+
+# Set Qt to use offscreen platform for CI
+if os.environ.get("CI"):
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 from kawaii_voice_changer.core import AudioProcessor
 
