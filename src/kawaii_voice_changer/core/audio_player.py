@@ -28,7 +28,7 @@ class AudioPlayer:
         self.is_playing = False
         self.loop_enabled = True
         self.loop_start = 0  # Loop start position in samples
-        self.loop_end = 0    # Loop end position in samples (0 = end of file)
+        self.loop_end = 0  # Loop end position in samples (0 = end of file)
         self.loop_crossfade_ms = 50  # Crossfade duration in milliseconds
         self.volume = 1.0
 
@@ -100,8 +100,12 @@ class AudioPlayer:
 
                     if loop_length > 0:
                         # Calculate crossfade samples
-                        crossfade_samples = int(self.loop_crossfade_ms * self.processor.sample_rate / 1000)
-                        crossfade_samples = min(crossfade_samples, samples_available, loop_length // 4)
+                        crossfade_samples = int(
+                            self.loop_crossfade_ms * self.processor.sample_rate / 1000
+                        )
+                        crossfade_samples = min(
+                            crossfade_samples, samples_available, loop_length // 4
+                        )
 
                         # Apply crossfade if we have samples at the end
                         if samples_available > 0 and crossfade_samples > 0:
@@ -112,21 +116,29 @@ class AudioPlayer:
 
                             # Fade in from loop start and mix
                             fade_in = np.linspace(0.0, 1.0, crossfade_samples)
-                            loop_audio = audio[loop_start : loop_start + crossfade_samples] * self.volume
-                            outdata[start_idx:samples_available, 0] += loop_audio * fade_in
+                            loop_audio = (
+                                audio[loop_start : loop_start + crossfade_samples]
+                                * self.volume
+                            )
+                            outdata[start_idx:samples_available, 0] += (
+                                loop_audio * fade_in
+                            )
 
                         # Fill the rest normally
                         pos = samples_available
                         while remaining > 0:
                             chunk_size = min(remaining, loop_length)
                             outdata[pos : pos + chunk_size, 0] = (
-                                audio[loop_start : loop_start + chunk_size] * self.volume
+                                audio[loop_start : loop_start + chunk_size]
+                                * self.volume
                             )
                             pos += chunk_size
                             remaining -= chunk_size
 
                         # Update position
-                        self.play_position = loop_start + ((samples_needed - samples_available) % loop_length)
+                        self.play_position = loop_start + (
+                            (samples_needed - samples_available) % loop_length
+                        )
                     else:
                         # Invalid loop region
                         outdata[samples_available:, 0] = 0
@@ -153,7 +165,9 @@ class AudioPlayer:
                         # Loop from beginning or loop start
                         remaining = samples_needed - samples_available
                         self.play_position = loop_start + remaining
-                        outdata[samples_available:, 0] = audio[loop_start : loop_start + remaining] * self.volume
+                        outdata[samples_available:, 0] = (
+                            audio[loop_start : loop_start + remaining] * self.volume
+                        )
                     else:
                         # No loop: fill with silence
                         outdata[samples_available:, 0] = 0
@@ -268,12 +282,16 @@ class AudioPlayer:
 
                 # Convert to samples using effective sample rate
                 self.loop_start = int(start_time * effective_sample_rate)
-                self.loop_end = int(end_time * effective_sample_rate) if end_time > 0 else 0
+                self.loop_end = (
+                    int(end_time * effective_sample_rate) if end_time > 0 else 0
+                )
 
                 # Ensure valid range
                 self.loop_start = max(0, min(self.loop_start, audio_length - 1))
                 if self.loop_end > 0:
-                    self.loop_end = max(self.loop_start + 1, min(self.loop_end, audio_length))
+                    self.loop_end = max(
+                        self.loop_start + 1, min(self.loop_end, audio_length)
+                    )
 
                 # If end < start, swap them
                 if self.loop_end > 0 and self.loop_end < self.loop_start:
@@ -320,7 +338,9 @@ class AudioPlayer:
                     effective_sample_rate = self.processor.sample_rate
 
                 start_time = self.loop_start / effective_sample_rate
-                end_time = self.loop_end / effective_sample_rate if self.loop_end > 0 else 0
+                end_time = (
+                    self.loop_end / effective_sample_rate if self.loop_end > 0 else 0
+                )
             else:
                 start_time = 0.0
                 end_time = 0.0

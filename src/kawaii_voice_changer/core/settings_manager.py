@@ -145,7 +145,9 @@ class SettingsManager:
             "name": slot.name,
             "is_empty": slot.is_empty,
             "f0_ratio": slot.f0_ratio if not slot.is_empty else None,
-            "formant_ratios": slot.formant_ratios.copy() if not slot.is_empty and slot.formant_ratios else None,
+            "formant_ratios": slot.formant_ratios.copy()
+            if not slot.is_empty and slot.formant_ratios
+            else None,
             "formant_link": slot.formant_link if not slot.is_empty else None,
         }
 
@@ -155,7 +157,11 @@ class SettingsManager:
         Returns:
             List of slot information dictionaries.
         """
-        return [self.get_slot_info(i) for i in range(self.MAX_SLOTS) if self.get_slot_info(i) is not None]
+        return [
+            self.get_slot_info(i)
+            for i in range(self.MAX_SLOTS)
+            if self.get_slot_info(i) is not None
+        ]
 
     def set_current_slot(self, index: int) -> bool:
         """Set the current active slot.
@@ -214,7 +220,7 @@ class SettingsManager:
             data: Dictionary containing slots data.
         """
         slots_data = data.get("slots", [])
-        for i, slot_data in enumerate(slots_data[:self.MAX_SLOTS]):
+        for i, slot_data in enumerate(slots_data[: self.MAX_SLOTS]):
             self.slots[i] = SettingsSlot.from_dict(slot_data)
 
         self.current_slot_index = data.get("current_slot_index", 0)

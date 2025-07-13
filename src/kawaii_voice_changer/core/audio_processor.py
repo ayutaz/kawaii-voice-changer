@@ -210,8 +210,8 @@ class AudioProcessor:
         """
         # Define formant frequency bands (in Hz)
         # These are approximate ranges for adult speech
-        f1_range = (200, 1000)   # F1 typically 200-1000 Hz
-        f2_range = (800, 2500)   # F2 typically 800-2500 Hz
+        f1_range = (200, 1000)  # F1 typically 200-1000 Hz
+        f2_range = (800, 2500)  # F2 typically 800-2500 Hz
         f3_range = (2000, 4000)  # F3 typically 2000-4000 Hz
 
         # Get frequency axis
@@ -277,7 +277,7 @@ class AudioProcessor:
         self,
         spectrum: npt.NDArray[np.float64],
         indices: npt.NDArray[np.intp],
-        ratio: float
+        ratio: float,
     ) -> npt.NDArray[np.float64]:
         """Apply frequency shift to a local region of the spectrum.
 
@@ -307,7 +307,7 @@ class AudioProcessor:
             shifted_freqs,
             local_spectrum,
             left=local_spectrum[0],
-            right=local_spectrum[-1]
+            right=local_spectrum[-1],
         )
 
         # Apply smoothing at boundaries to avoid discontinuities
@@ -318,12 +318,12 @@ class AudioProcessor:
             fade_out = np.linspace(1, 0, fade_length)
 
             shifted_local[:fade_length] = (
-                spectrum[indices[:fade_length]] * (1 - fade_in) +
-                shifted_local[:fade_length] * fade_in
+                spectrum[indices[:fade_length]] * (1 - fade_in)
+                + shifted_local[:fade_length] * fade_in
             )
             shifted_local[-fade_length:] = (
-                spectrum[indices[-fade_length:]] * (1 - fade_out) +
-                shifted_local[-fade_length:] * fade_out
+                spectrum[indices[-fade_length:]] * (1 - fade_out)
+                + shifted_local[-fade_length:] * fade_out
             )
 
         shifted[indices] = shifted_local

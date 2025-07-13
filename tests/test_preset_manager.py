@@ -39,11 +39,11 @@ class TestPresetManager:
         # Save preset
         result = preset_manager.save_preset(test_preset)
         assert result is True
-        
+
         # Check that file was created
         preset_file = preset_manager.preset_dir / "test_preset.json"
         assert preset_file.exists()
-        
+
         # Check file contents
         with preset_file.open("r") as f:
             data = json.load(f)
@@ -52,7 +52,7 @@ class TestPresetManager:
         assert data["f0_ratio"] == 1.2
         assert data["formant_ratios"] == {"f1": 0.9, "f2": 1.1, "f3": 1.3}
         assert data["formant_link"] is False
-        
+
         # Check that preset is in cache
         assert preset_manager.preset_exists("Test Preset")
 
@@ -60,7 +60,7 @@ class TestPresetManager:
         """Test loading presets from disk."""
         preset_dir = tmp_path / "presets"
         preset_dir.mkdir()
-        
+
         # Create preset file manually
         preset_data = {
             "name": "Loaded Preset",
@@ -72,11 +72,11 @@ class TestPresetManager:
         preset_file = preset_dir / "loaded_preset.json"
         with preset_file.open("w") as f:
             json.dump(preset_data, f)
-        
+
         # Create manager and check it loaded the preset
         manager = PresetManager(preset_dir=preset_dir)
         assert "Loaded Preset" in manager.list_presets()
-        
+
         preset = manager.get_preset("Loaded Preset")
         assert preset is not None
         assert preset.name == "Loaded Preset"
@@ -89,15 +89,15 @@ class TestPresetManager:
         # Save preset first
         preset_manager.save_preset(test_preset)
         assert preset_manager.preset_exists("Test Preset")
-        
+
         # Delete preset
         result = preset_manager.delete_preset("Test Preset")
         assert result is True
-        
+
         # Check that preset is gone
         assert not preset_manager.preset_exists("Test Preset")
         assert "Test Preset" not in preset_manager.list_presets()
-        
+
         # Check that file is gone
         preset_file = preset_manager.preset_dir / "test_preset.json"
         assert not preset_file.exists()
@@ -108,11 +108,11 @@ class TestPresetManager:
         """Test getting a preset."""
         # Should return None for non-existent preset
         assert preset_manager.get_preset("Non-existent") is None
-        
+
         # Save and get preset
         preset_manager.save_preset(test_preset)
         retrieved = preset_manager.get_preset("Test Preset")
-        
+
         assert retrieved is not None
         assert retrieved.name == test_preset.name
         assert retrieved.f0_ratio == test_preset.f0_ratio
@@ -122,7 +122,7 @@ class TestPresetManager:
         """Test listing presets."""
         # Empty initially
         assert preset_manager.list_presets() == []
-        
+
         # Add multiple presets
         for i in range(3):
             preset = Preset(
@@ -133,7 +133,7 @@ class TestPresetManager:
                 formant_link=True,
             )
             preset_manager.save_preset(preset)
-        
+
         # Should be sorted
         presets = preset_manager.list_presets()
         assert presets == ["Preset 0", "Preset 1", "Preset 2"]
@@ -144,17 +144,17 @@ class TestPresetManager:
         """Test exporting and importing presets."""
         # Save preset
         preset_manager.save_preset(test_preset)
-        
+
         # Export to file
         export_path = tmp_path / "exported.json"
         result = preset_manager.export_preset("Test Preset", export_path)
         assert result is True
         assert export_path.exists()
-        
+
         # Create new manager and import
         new_manager = PresetManager(preset_dir=tmp_path / "new_presets")
         imported = new_manager.import_preset(export_path)
-        
+
         assert imported is not None
         assert imported.name == test_preset.name
         assert new_manager.preset_exists("Test Preset")
@@ -165,7 +165,7 @@ class TestPresetManager:
         """Test overwriting an existing preset."""
         # Save original
         preset_manager.save_preset(test_preset)
-        
+
         # Create modified version
         modified = Preset(
             name="Test Preset",  # Same name
@@ -174,11 +174,11 @@ class TestPresetManager:
             formant_ratios={"f1": 0.5, "f2": 0.5, "f3": 0.5},
             formant_link=True,
         )
-        
+
         # Save should overwrite
         result = preset_manager.save_preset(modified)
         assert result is True
-        
+
         # Check that it was overwritten
         retrieved = preset_manager.get_preset("Test Preset")
         assert retrieved is not None

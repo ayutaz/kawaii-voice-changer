@@ -103,7 +103,9 @@ class MainWindow(QMainWindow):
         waveform_layout.addWidget(self.waveform_display)
 
         # Loop instructions
-        loop_hint = QLabel("ヒント: Ctrl+クリックでループ領域を選択、右クリックでクリア、ドラッグで調整")
+        loop_hint = QLabel(
+            "ヒント: Ctrl+クリックでループ領域を選択、右クリックでクリア、ドラッグで調整"
+        )
         loop_hint.setStyleSheet("color: gray; font-size: 10pt; padding: 2px;")
         waveform_layout.addWidget(loop_hint)
 
@@ -266,12 +268,16 @@ class MainWindow(QMainWindow):
             slot_button = QPushButton(f"スロット {i + 1}")
             slot_button.setCheckable(True)
             slot_button.setMinimumWidth(100)
-            slot_button.clicked.connect(lambda checked, idx=i: self._on_slot_clicked(idx))  # noqa: ARG005
+            slot_button.clicked.connect(
+                lambda _checked, idx=i: self._on_slot_clicked(idx)
+            )
 
             # Add right-click menu
             slot_button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
             slot_button.customContextMenuRequested.connect(
-                lambda pos, idx=i, btn=slot_button: self._on_slot_context_menu(idx, btn.mapToGlobal(pos))
+                lambda pos, idx=i, btn=slot_button: self._on_slot_context_menu(
+                    idx, btn.mapToGlobal(pos)
+                )
             )
 
             self.slot_buttons.append(slot_button)
@@ -816,7 +822,9 @@ class MainWindow(QMainWindow):
 
             if file_path:
                 # Export audio
-                if self.processor.export_audio(Path(file_path), processed=export_processed):
+                if self.processor.export_audio(
+                    Path(file_path), processed=export_processed
+                ):
                     QMessageBox.information(
                         self,
                         "エクスポート完了",
@@ -968,7 +976,9 @@ class MainWindow(QMainWindow):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
-        if reply == QMessageBox.StandardButton.Yes and self.settings_manager.clear_slot(index):
+        if reply == QMessageBox.StandardButton.Yes and self.settings_manager.clear_slot(
+            index
+        ):
             # Reset button appearance
             button = self.slot_buttons[index]
             button.setStyleSheet("")
@@ -986,7 +996,9 @@ class MainWindow(QMainWindow):
 
         # Loop toggle
         loop_shortcut = QShortcut(QKeySequence("L"), self)
-        loop_shortcut.activated.connect(lambda: self.playback_controls.loop_checkbox.toggle())
+        loop_shortcut.activated.connect(
+            lambda: self.playback_controls.loop_checkbox.toggle()
+        )
 
         # Parameter reset shortcuts
         reset_f0_shortcut = QShortcut(QKeySequence("Ctrl+1"), self)

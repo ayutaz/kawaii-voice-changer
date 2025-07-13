@@ -101,7 +101,8 @@ class PresetDialog(QDialog):
         # Dialog buttons
         button_layout = QHBoxLayout()
         self.buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+            QDialogButtonBox.StandardButton.Save
+            | QDialogButtonBox.StandardButton.Cancel
         )
         self.buttons.accepted.connect(self._on_save)
         self.buttons.rejected.connect(self.reject)

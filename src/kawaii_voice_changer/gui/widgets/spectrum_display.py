@@ -75,12 +75,10 @@ class SpectrumDisplay(QWidget):
                 pos=freq,
                 angle=90,
                 pen=pg.mkPen(
-                    color=(200, 50, 50),
-                    width=2,
-                    style=pg.QtCore.Qt.PenStyle.DashLine
+                    color=(200, 50, 50), width=2, style=pg.QtCore.Qt.PenStyle.DashLine
                 ),
-                label=f"F{i+1}",
-                labelOpts={"position": 0.95, "color": (200, 50, 50)}
+                label=f"F{i + 1}",
+                labelOpts={"position": 0.95, "color": (200, 50, 50)},
             )
             self.spectrum_plot.addItem(line)
             self.formant_lines.append(line)
@@ -166,7 +164,7 @@ class SpectrumDisplay(QWidget):
             return
 
         # Get frequency range
-        freqs = np.fft.rfftfreq(self.fft_size, 1/self.sample_rate)
+        freqs = np.fft.rfftfreq(self.fft_size, 1 / self.sample_rate)
         freq_mask = freqs <= self.freq_max
 
         # Display only up to freq_max
@@ -179,11 +177,7 @@ class SpectrumDisplay(QWidget):
         normalized = np.clip(normalized, 0, 1)
 
         # Set image
-        self.spectrogram_img.setImage(
-            normalized.T,
-            autoLevels=False,
-            levels=[0, 1]
-        )
+        self.spectrogram_img.setImage(normalized.T, autoLevels=False, levels=[0, 1])
 
         # Set transform to match axes
         time_scale = self.hop_size / self.sample_rate
@@ -216,7 +210,7 @@ class SpectrumDisplay(QWidget):
         if end - start < self.fft_size:
             # Pad with zeros if needed
             frame = np.zeros(self.fft_size)
-            frame[:end-start] = self.audio_buffer[start:end]
+            frame[: end - start] = self.audio_buffer[start:end]
         else:
             frame = self.audio_buffer[start:end]
 
@@ -229,7 +223,7 @@ class SpectrumDisplay(QWidget):
         db = 20 * np.log10(magnitude + 1e-10)
 
         # Get frequencies
-        freqs = np.fft.rfftfreq(self.fft_size, 1/self.sample_rate)
+        freqs = np.fft.rfftfreq(self.fft_size, 1 / self.sample_rate)
 
         # Update plot (only up to freq_max)
         freq_mask = freqs <= self.freq_max
@@ -244,9 +238,11 @@ class SpectrumDisplay(QWidget):
             f3: F3 frequency in Hz.
         """
         formants = [f1, f2, f3]
-        for i, (line, freq) in enumerate(zip(self.formant_lines, formants, strict=False)):
+        for i, (line, freq) in enumerate(
+            zip(self.formant_lines, formants, strict=False)
+        ):
             line.setPos(freq)
-            line.label.setText(f"F{i+1}: {freq:.0f}Hz")
+            line.label.setText(f"F{i + 1}: {freq:.0f}Hz")
 
     def clear(self) -> None:
         """Clear all displays."""

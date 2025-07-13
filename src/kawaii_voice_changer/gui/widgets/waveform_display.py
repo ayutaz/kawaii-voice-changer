@@ -180,7 +180,10 @@ class WaveformDisplay(QWidget):
         if event.button() == Qt.MouseButton.RightButton:
             # Right click to clear loop region
             self.clear_loop_region()
-        elif event.button() == Qt.MouseButton.LeftButton and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+        elif (
+            event.button() == Qt.MouseButton.LeftButton
+            and event.modifiers() & Qt.KeyboardModifier.ControlModifier
+        ):
             # Ctrl+click to start loop region selection
             pos = self.plot_widget.plotItem.vb.mapSceneToView(event.scenePos())
             x = pos.x()

@@ -38,7 +38,9 @@ class Config:
 
     # Parameter settings
     last_f0_ratio: float = 1.0
-    last_formant_ratios: dict[str, float] = field(default_factory=lambda: {"f1": 1.0, "f2": 1.0, "f3": 1.0})
+    last_formant_ratios: dict[str, float] = field(
+        default_factory=lambda: {"f1": 1.0, "f2": 1.0, "f3": 1.0}
+    )
     last_formant_link: bool = True
     last_loop_crossfade_ms: int = 50
 
@@ -126,7 +128,9 @@ class Config:
             cache_processed_audio=data.get("cache_processed_audio", True),
             show_advanced_controls=data.get("show_advanced_controls", False),
             last_f0_ratio=data.get("last_f0_ratio", 1.0),
-            last_formant_ratios=data.get("last_formant_ratios", {"f1": 1.0, "f2": 1.0, "f3": 1.0}),
+            last_formant_ratios=data.get(
+                "last_formant_ratios", {"f1": 1.0, "f2": 1.0, "f3": 1.0}
+            ),
             last_formant_link=data.get("last_formant_link", True),
             last_loop_crossfade_ms=data.get("last_loop_crossfade_ms", 50),
         )

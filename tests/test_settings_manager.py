@@ -26,7 +26,7 @@ class TestSettingsSlot:
             formant_link=False,
             is_empty=False,
         )
-        
+
         data = slot.to_dict()
         assert data["name"] == "Test"
         assert data["f0_ratio"] == 1.5
@@ -43,7 +43,7 @@ class TestSettingsSlot:
             "formant_link": True,
             "is_empty": False,
         }
-        
+
         slot = SettingsSlot.from_dict(data)
         assert slot.name == "Loaded"
         assert slot.f0_ratio == 2.0
@@ -64,7 +64,7 @@ class TestSettingsManager:
         """Test manager initialization."""
         assert len(manager.slots) == SettingsManager.MAX_SLOTS
         assert manager.current_slot_index == 0
-        
+
         # All slots should be empty initially
         for i in range(SettingsManager.MAX_SLOTS):
             assert manager.slots[i].is_empty is True
@@ -79,7 +79,7 @@ class TestSettingsManager:
             formant_link=False,
             name="Custom Slot",
         )
-        
+
         assert result is True
         assert manager.slots[0].is_empty is False
         assert manager.slots[0].f0_ratio == 1.5
@@ -91,7 +91,7 @@ class TestSettingsManager:
         """Test loading from a slot."""
         # Empty slot should return None
         assert manager.load_from_slot(0) is None
-        
+
         # Save settings
         manager.save_to_slot(
             0,
@@ -99,7 +99,7 @@ class TestSettingsManager:
             formant_ratios={"f1": 0.9, "f2": 1.1, "f3": 1.2},
             formant_link=False,
         )
-        
+
         # Load settings
         settings = manager.load_from_slot(0)
         assert settings is not None
@@ -116,7 +116,7 @@ class TestSettingsManager:
             formant_ratios={"f1": 0.9, "f2": 1.1, "f3": 1.2},
             formant_link=False,
         )
-        
+
         # Clear slot
         result = manager.clear_slot(1)
         assert result is True
@@ -130,7 +130,7 @@ class TestSettingsManager:
         assert info is not None
         assert info["is_empty"] is True
         assert info["f0_ratio"] is None
-        
+
         # Filled slot
         manager.save_to_slot(
             0,
@@ -138,7 +138,7 @@ class TestSettingsManager:
             formant_ratios={"f1": 0.9, "f2": 1.1, "f3": 1.2},
             formant_link=False,
         )
-        
+
         info = manager.get_slot_info(0)
         assert info is not None
         assert info["is_empty"] is False
@@ -147,11 +147,11 @@ class TestSettingsManager:
     def test_current_slot_management(self, manager: SettingsManager) -> None:
         """Test current slot management."""
         assert manager.get_current_slot() == 0
-        
+
         # Set current slot
         assert manager.set_current_slot(2) is True
         assert manager.get_current_slot() == 2
-        
+
         # Invalid index
         assert manager.set_current_slot(10) is False
         assert manager.get_current_slot() == 2  # Should remain unchanged
@@ -160,7 +160,7 @@ class TestSettingsManager:
         """Test renaming a slot."""
         assert manager.rename_slot(0, "My Custom Slot") is True
         assert manager.slots[0].name == "My Custom Slot"
-        
+
         # Invalid index
         assert manager.rename_slot(10, "Invalid") is False
 
@@ -180,14 +180,14 @@ class TestSettingsManager:
             formant_link=True,
         )
         manager.set_current_slot(2)
-        
+
         # Serialize
         data = manager.to_dict()
-        
+
         # Create new manager and load
         new_manager = SettingsManager()
         new_manager.from_dict(data)
-        
+
         # Verify
         assert new_manager.current_slot_index == 2
         assert new_manager.slots[0].is_empty is False
