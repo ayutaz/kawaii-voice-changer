@@ -15,23 +15,23 @@ class Config:
     # Audio settings
     sample_rate: int = 44100
     buffer_size: int = 512
-    
+
     # UI settings
     window_width: int = 900
     window_height: int = 700
     theme: str = "fusion"
     language: str = "ja"
-    
+
     # File settings
     last_directory: str = ""
     recent_files: list[str] = field(default_factory=list)
     max_recent_files: int = 10
-    
+
     # Playback settings
     default_volume: float = 1.0
     loop_by_default: bool = True
     auto_play_on_load: bool = True
-    
+
     # Advanced settings
     cache_processed_audio: bool = True
     show_advanced_controls: bool = False
@@ -60,7 +60,7 @@ class Config:
             return cls()
 
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
             return cls.from_dict(data)
         except Exception:

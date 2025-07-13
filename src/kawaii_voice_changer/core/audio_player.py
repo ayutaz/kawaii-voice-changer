@@ -43,7 +43,7 @@ class AudioPlayer:
         self,
         outdata: npt.NDArray[np.float32],
         frames: int,
-        time_info: Any,
+        time_info: Any,  # noqa: ARG002
         status: sd.CallbackFlags,
     ) -> None:
         """Sounddevice callback function.

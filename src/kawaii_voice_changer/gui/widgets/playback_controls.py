@@ -35,32 +35,32 @@ class PlaybackControls(QWidget):
     def _setup_ui(self) -> None:
         """Set up user interface."""
         layout = QHBoxLayout(self)
-        
+
         # Play/Pause button
         self.play_button = QPushButton("▶ 再生")
         self.play_button.clicked.connect(self._on_play_clicked)
         layout.addWidget(self.play_button)
-        
+
         # Stop button
         self.stop_button = QPushButton("■ 停止")
         self.stop_button.clicked.connect(self._on_stop_clicked)
         layout.addWidget(self.stop_button)
-        
+
         # Position label
         self.position_label = QLabel("0:00 / 0:00")
         layout.addWidget(self.position_label)
-        
+
         layout.addStretch()
-        
+
         # Loop checkbox
         self.loop_checkbox = QCheckBox("ループ")
         self.loop_checkbox.setChecked(True)
         self.loop_checkbox.toggled.connect(self.loop_changed.emit)
         layout.addWidget(self.loop_checkbox)
-        
+
         # Volume controls
         layout.addWidget(QLabel("音量:"))
-        
+
         self.volume_slider = QSlider(Qt.Orientation.Horizontal)
         self.volume_slider.setMinimum(0)
         self.volume_slider.setMaximum(100)
@@ -68,7 +68,7 @@ class PlaybackControls(QWidget):
         self.volume_slider.setFixedWidth(100)
         self.volume_slider.valueChanged.connect(self._on_volume_changed)
         layout.addWidget(self.volume_slider)
-        
+
         self.volume_label = QLabel("100%")
         self.volume_label.setMinimumWidth(40)
         layout.addWidget(self.volume_label)

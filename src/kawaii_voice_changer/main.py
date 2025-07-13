@@ -6,7 +6,7 @@ import sys
 import traceback
 from pathlib import Path
 
-from PySide6.QtCore import qInstallMessageHandler, QtMsgType
+from PySide6.QtCore import QtMsgType, qInstallMessageHandler
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from .gui import MainWindow
@@ -15,9 +15,9 @@ from .utils import Config, setup_logger
 logger = setup_logger("kawaii_voice_changer")
 
 
-def qt_message_handler(msg_type: QtMsgType, context, msg: str) -> None:
+def qt_message_handler(msg_type: QtMsgType, context, msg: str) -> None:  # noqa: ARG001
     """Handle Qt messages.
-    
+
     Args:
         msg_type: Message type.
         context: Message context.
@@ -44,37 +44,37 @@ def main() -> int:
     try:
         # Install Qt message handler
         qInstallMessageHandler(qt_message_handler)
-        
+
         # Create application
         app = QApplication(sys.argv)
         app.setApplicationName("Kawaii Voice Changer")
         app.setOrganizationName("ayutaz")
-        
+
         # Set application style
         app.setStyle("Fusion")
-        
+
         # Load configuration
         config_path = Path.home() / ".kawaii_voice_changer" / "config.json"
         config = Config.load(config_path)
-        
+
         # Create and show main window
         window = MainWindow(config)
         window.show()
-        
+
         logger.info("Application started")
-        
+
         # Run application
         result = app.exec()
-        
+
         # Save configuration
         config.save(config_path)
-        
+
         return result
-        
+
     except Exception as e:
         logger.error(f"Fatal error: {e}")
         logger.error(traceback.format_exc())
-        
+
         # Show error dialog if possible
         try:
             app = QApplication.instance()
@@ -85,9 +85,9 @@ def main() -> int:
                     f"An unexpected error occurred:\n\n{str(e)}\n\n"
                     "Please check the log file for details.",
                 )
-        except:
+        except Exception:  # noqa: S110
             pass
-        
+
         return 1
 
 

@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import numpy as np
-import pytest
 
 from kawaii_voice_changer.core import AudioProcessor
 

@@ -11,7 +11,13 @@
       "Bash(mv:*)",
       "Bash(git push:*)",
       "WebFetch(domain:github.com)",
-      "Bash(python -m pytest tests/ -v)"
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(find:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(uv run ruff check:*)"
     ],
     "deny": []
   }

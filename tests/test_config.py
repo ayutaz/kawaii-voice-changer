@@ -1,9 +1,6 @@
 """Tests for configuration module."""
 
-import json
 from pathlib import Path
-
-import pytest
 
 from kawaii_voice_changer.utils import Config
 
@@ -14,7 +11,7 @@ class TestConfig:
     def test_default_values(self):
         """Test default configuration values."""
         config = Config()
-        
+
         assert config.sample_rate == 44100
         assert config.buffer_size == 512
         assert config.window_width == 900
@@ -29,9 +26,9 @@ class TestConfig:
         config = Config()
         config.last_directory = "/test/path"
         config.recent_files = ["/test/file1.wav", "/test/file2.wav"]
-        
+
         data = config.to_dict()
-        
+
         assert isinstance(data, dict)
         assert data["last_directory"] == "/test/path"
         assert data["recent_files"] == ["/test/file1.wav", "/test/file2.wav"]
@@ -47,9 +44,9 @@ class TestConfig:
             "last_directory": "/custom/path",
             "recent_files": ["/custom/file.wav"],
         }
-        
+
         config = Config.from_dict(data)
-        
+
         assert config.sample_rate == 48000
         assert config.buffer_size == 1024
         assert config.window_width == 1200
@@ -63,16 +60,16 @@ class TestConfig:
         config.last_directory = "/test/save"
         config.recent_files = ["/test/save1.wav", "/test/save2.wav"]
         config.default_volume = 0.8
-        
+
         # Save
         config_file = tmp_path / "test_config.json"
         config.save(config_file)
-        
+
         assert config_file.exists()
-        
+
         # Load
         loaded_config = Config.load(config_file)
-        
+
         assert loaded_config.last_directory == "/test/save"
         assert loaded_config.recent_files == ["/test/save1.wav", "/test/save2.wav"]
         assert loaded_config.default_volume == 0.8
@@ -81,7 +78,7 @@ class TestConfig:
         """Test loading non-existent config file."""
         config_file = tmp_path / "nonexistent.json"
         config = Config.load(config_file)
-        
+
         # Should return default config
         assert config.sample_rate == 44100
         assert config.recent_files == []
@@ -90,9 +87,9 @@ class TestConfig:
         """Test loading invalid JSON file."""
         config_file = tmp_path / "invalid.json"
         config_file.write_text("{ invalid json }")
-        
+
         config = Config.load(config_file)
-        
+
         # Should return default config on error
         assert config.sample_rate == 44100
 
@@ -100,18 +97,18 @@ class TestConfig:
         """Test adding recent files."""
         config = Config()
         config.max_recent_files = 3
-        
+
         # Add files
         config.add_recent_file("/file1.wav")
         config.add_recent_file("/file2.wav")
         config.add_recent_file("/file3.wav")
-        
+
         assert config.recent_files == ["/file3.wav", "/file2.wav", "/file1.wav"]
-        
+
         # Add duplicate (should move to front)
         config.add_recent_file("/file1.wav")
         assert config.recent_files == ["/file1.wav", "/file3.wav", "/file2.wav"]
-        
+
         # Add new file (should remove oldest)
         config.add_recent_file("/file4.wav")
         assert config.recent_files == ["/file4.wav", "/file1.wav", "/file3.wav"]

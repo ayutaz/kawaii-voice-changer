@@ -32,14 +32,14 @@ class ParameterSlider(QWidget):
             parent: Parent widget.
         """
         super().__init__(parent)
-        
+
         self.min_value = min_value
         self.max_value = max_value
         self.step = step
-        
+
         # Calculate slider range based on step
         self.slider_max = int((max_value - min_value) / step)
-        
+
         self._setup_ui(label, default_value)
 
     def _setup_ui(self, label: str, default_value: float) -> None:
@@ -51,26 +51,26 @@ class ParameterSlider(QWidget):
         """
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        
+
         # Label and value display
         label_layout = QHBoxLayout()
         self.label = QLabel(label)
         label_layout.addWidget(self.label)
-        
+
         label_layout.addStretch()
-        
+
         self.value_label = QLabel()
         label_layout.addWidget(self.value_label)
-        
+
         layout.addLayout(label_layout)
-        
+
         # Slider
         self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(self.slider_max)
         self.slider.valueChanged.connect(self._on_slider_changed)
         layout.addWidget(self.slider)
-        
+
         # Set default value
         self.set_value(default_value)
 
@@ -102,7 +102,7 @@ class ParameterSlider(QWidget):
         """
         # Clamp value to range
         value = max(self.min_value, min(self.max_value, value))
-        
+
         # Convert to slider position
         slider_value = int((value - self.min_value) / self.step)
         self.slider.setValue(slider_value)

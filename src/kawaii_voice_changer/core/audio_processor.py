@@ -52,7 +52,7 @@ class AudioProcessor:
         """
         try:
             file_path = Path(file_path)
-            
+
             # Load audio file
             self.audio_data, file_sr = sf.read(str(file_path), always_2d=False)
 
