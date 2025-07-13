@@ -1,10 +1,21 @@
 # Kawaii Voice Changer 🎤
 
 [![CI](https://github.com/ayutaz/kawaii-voice-changer/actions/workflows/ci.yml/badge.svg)](https://github.com/ayutaz/kawaii-voice-changer/actions/workflows/ci.yml)
+[![Release](https://github.com/ayutaz/kawaii-voice-changer/actions/workflows/release.yml/badge.svg)](https://github.com/ayutaz/kawaii-voice-changer/actions/workflows/release.yml)
+[![Nightly Build](https://github.com/ayutaz/kawaii-voice-changer/actions/workflows/nightly.yml/badge.svg)](https://github.com/ayutaz/kawaii-voice-changer/actions/workflows/nightly.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 
 基本周波数（F0）とフォルマント周波数（F1-F3）を調整して「可愛い声」のスイートスポットを見つけるデスクトップアプリケーションです。論文「Finding Kawaii」（arXiv:2507.06235）の研究成果に基づいています。
+
+## 📥 ダウンロード
+
+### 安定版リリース
+最新の安定版は[Releasesページ](https://github.com/ayutaz/kawaii-voice-changer/releases/latest)からダウンロードできます。
+
+### 開発版（Nightly Build）
+最新の機能を試したい方は[Nightly Build](https://github.com/ayutaz/kawaii-voice-changer/releases/tag/nightly)をご利用ください。
+※ 開発版は不安定な場合があります。
 
 ## 🌟 特徴
 

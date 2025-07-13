@@ -1,0 +1,176 @@
+name: Nightly Build
+
+on:
+  schedule:
+    # Run at 2 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Check for recent changes
+      id: check
+      run: |
+        # Check if there were commits in the last 24 hours
+        LAST_COMMIT=$(git log -1 --format=%ct)
+        CURRENT_TIME=$(date +%s)
+        DIFF=$((CURRENT_TIME - LAST_COMMIT))
+        
+        if [ $DIFF -lt 86400 ]; then
+          echo "should_build=true" >> $GITHUB_OUTPUT
+          echo "Recent changes detected, proceeding with build"
+        else
+          echo "should_build=false" >> $GITHUB_OUTPUT
+          echo "No recent changes, skipping build"
+        fi
+
+  nightly-build:
+    needs: check-changes
+    if: needs.check-changes.outputs.should_build == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: Linux
+            artifact_name: KawaiiVoiceChanger-Linux-nightly
+            build_name: KawaiiVoiceChanger
+          - os: windows-latest
+            name: Windows
+            artifact_name: KawaiiVoiceChanger-Windows-nightly
+            build_name: KawaiiVoiceChanger.exe
+          - os: macos-latest
+            name: macOS
+            artifact_name: KawaiiVoiceChanger-macOS-nightly
+            build_name: KawaiiVoiceChanger
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
+        cache-dependency-glob: "pyproject.toml"
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libportaudio2 libsndfile1 libasound2-dev
+    
+    - name: Install system dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install portaudio libsndfile
+    
+    - name: Install project with build dependencies
+      run: |
+        uv sync --extra build
+    
+    - name: Set version to nightly
+      run: |
+        DATE=$(date +%Y%m%d)
+        echo "VERSION=nightly-$DATE" >> $GITHUB_ENV
+      shell: bash
+    
+    - name: Build executable
+      run: |
+        uv run pyinstaller kawaii_voice_changer.spec --clean
+    
+    - name: Create nightly package (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        cd dist
+        7z a -tzip ../${{ matrix.artifact_name }}.zip ${{ matrix.build_name }}
+      shell: bash
+    
+    - name: Create nightly package (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        cd dist
+        if [ -d "KawaiiVoiceChanger.app" ]; then
+          zip -r ../${{ matrix.artifact_name }}.zip KawaiiVoiceChanger.app
+        else
+          zip ../${{ matrix.artifact_name }}.zip ${{ matrix.build_name }}
+        fi
+    
+    - name: Create nightly package (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        cd dist
+        tar -czf ../${{ matrix.artifact_name }}.tar.gz ${{ matrix.build_name }}
+    
+    - name: Upload nightly build
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact_name }}-${{ github.sha }}
+        path: |
+          ${{ matrix.artifact_name }}.zip
+          ${{ matrix.artifact_name }}.tar.gz
+        retention-days: 7
+
+  create-nightly-release:
+    needs: nightly-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Delete old nightly release
+      uses: dev-drprasad/delete-tag-and-release@v1.0
+      with:
+        tag_name: nightly
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+    
+    - name: Create nightly release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: nightly
+        name: Nightly Build
+        body: |
+          # 🌙 Nightly Build
+          
+          最新の開発版ビルドです。安定性は保証されません。
+          
+          **ビルド日時**: ${{ github.event.repository.updated_at }}
+          **コミット**: ${{ github.sha }}
+          
+          ## ⚠️ 注意事項
+          
+          - このビルドは自動生成された開発版です
+          - 本番環境での使用は推奨されません
+          - バグや不具合が含まれている可能性があります
+          
+          ## 📥 ダウンロード
+          
+          - **Windows**: `KawaiiVoiceChanger-Windows-nightly.zip`
+          - **macOS**: `KawaiiVoiceChanger-macOS-nightly.zip`
+          - **Linux**: `KawaiiVoiceChanger-Linux-nightly.tar.gz`
+          
+        files: |
+          ./artifacts/**/*.zip
+          ./artifacts/**/*.tar.gz
+        draft: false
+        prerelease: true

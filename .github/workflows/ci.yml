@@ -97,7 +97,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            name: Linux
+            artifact_name: KawaiiVoiceChanger
+            artifact_ext: ''
+          - os: windows-latest
+            name: Windows
+            artifact_name: KawaiiVoiceChanger.exe
+            artifact_ext: '.exe'
+          - os: macos-latest
+            name: macOS
+            artifact_name: KawaiiVoiceChanger
+            artifact_ext: ''
         
     steps:
     - uses: actions/checkout@v4
@@ -117,7 +129,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libportaudio2 libsndfile1
+        sudo apt-get install -y libportaudio2 libsndfile1 libasound2-dev
     
     - name: Install system dependencies (macOS)
       if: matrix.os == 'macos-latest'
@@ -128,16 +140,37 @@ jobs:
       run: |
         uv sync --extra build
     
-    - name: Build executable
+    - name: Build executable with PyInstaller
       run: |
-        uv run pyinstaller --name=KawaiiVoiceChanger \
-                    --onefile \
-                    --windowed \
-                    --add-data "resources:resources" \
-                    src/kawaii_voice_changer/main.py
+        uv run pyinstaller kawaii_voice_changer.spec --clean
+    
+    - name: Create distribution package (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        cd dist
+        7z a -tzip ../KawaiiVoiceChanger-${{ matrix.name }}.zip KawaiiVoiceChanger.exe
+      shell: bash
+    
+    - name: Create distribution package (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        cd dist
+        if [ -d "KawaiiVoiceChanger.app" ]; then
+          zip -r ../KawaiiVoiceChanger-${{ matrix.name }}.zip KawaiiVoiceChanger.app
+        else
+          zip ../KawaiiVoiceChanger-${{ matrix.name }}.zip KawaiiVoiceChanger
+        fi
+    
+    - name: Create distribution package (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        cd dist
+        tar -czf ../KawaiiVoiceChanger-${{ matrix.name }}.tar.gz KawaiiVoiceChanger
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: KawaiiVoiceChanger-${{ matrix.os }}
-        path: dist/*
+        name: KawaiiVoiceChanger-${{ matrix.name }}-${{ github.sha }}
+        path: |
+          KawaiiVoiceChanger-*.zip
+          KawaiiVoiceChanger-*.tar.gz

@@ -4,42 +4,40 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v0.1.0)'
+        required: true
+        type: string
 
 jobs:
-  create-release:
-    runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-    steps:
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
-
-  build-and-upload:
-    needs: create-release
+  build-and-release:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
           - os: ubuntu-latest
-            asset_name: KawaiiVoiceChanger-Linux
-            asset_extension: ''
+            name: Linux
+            artifact_name: KawaiiVoiceChanger-Linux
+            build_name: KawaiiVoiceChanger
+            package_ext: .tar.gz
+            package_cmd: tar -czf
           - os: windows-latest
-            asset_name: KawaiiVoiceChanger-Windows
-            asset_extension: .exe
+            name: Windows
+            artifact_name: KawaiiVoiceChanger-Windows
+            build_name: KawaiiVoiceChanger.exe
+            package_ext: .zip
+            package_cmd: 7z a -tzip
           - os: macos-latest
-            asset_name: KawaiiVoiceChanger-macOS
-            asset_extension: .app
+            name: macOS
+            artifact_name: KawaiiVoiceChanger-macOS
+            build_name: KawaiiVoiceChanger
+            package_ext: .zip
+            package_cmd: zip -r
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install uv
       uses: astral-sh/setup-uv@v3
@@ -69,31 +67,77 @@ jobs:
 
     - name: Build executable
       run: |
-        uv run pyinstaller --name=KawaiiVoiceChanger \
-                    --onefile \
-                    --windowed \
-                    --add-data "resources:resources" \
-                    --icon=resources/icon.ico \
-                    src/kawaii_voice_changer/main.py
+        uv run pyinstaller kawaii_voice_changer.spec --clean
 
-    - name: Prepare release asset
+    - name: List build output
+      run: |
+        ls -la dist/
+      shell: bash
+
+    - name: Create distribution package
       run: |
         cd dist
         if [ "${{ matrix.os }}" == "windows-latest" ]; then
-          7z a -tzip ../${{ matrix.asset_name }}.zip KawaiiVoiceChanger.exe
+          7z a -tzip ../${{ matrix.artifact_name }}${{ matrix.package_ext }} ${{ matrix.build_name }}
         elif [ "${{ matrix.os }}" == "macos-latest" ]; then
-          zip -r ../${{ matrix.asset_name }}.zip KawaiiVoiceChanger.app
+          if [ -d "KawaiiVoiceChanger.app" ]; then
+            zip -r ../${{ matrix.artifact_name }}${{ matrix.package_ext }} KawaiiVoiceChanger.app
+          else
+            zip -r ../${{ matrix.artifact_name }}${{ matrix.package_ext }} ${{ matrix.build_name }}
+          fi
         else
-          zip ../${{ matrix.asset_name }}.zip KawaiiVoiceChanger
+          tar -czf ../${{ matrix.artifact_name }}${{ matrix.package_ext }} ${{ matrix.build_name }}
         fi
       shell: bash
 
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
       with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./${{ matrix.asset_name }}.zip
-        asset_name: ${{ matrix.asset_name }}.zip
-        asset_content_type: application/zip
+        name: ${{ matrix.artifact_name }}
+        path: ${{ matrix.artifact_name }}${{ matrix.package_ext }}
+
+  create-release:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+    
+    - name: List artifacts
+      run: |
+        ls -la ./artifacts/
+        ls -la ./artifacts/*/
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.event.inputs.version || github.ref_name }}
+        name: Release ${{ github.event.inputs.version || github.ref_name }}
+        body: |
+          # Kawaii Voice Changer ${{ github.event.inputs.version || github.ref_name }}
+          
+          ## 🎉 ダウンロード
+          
+          お使いのOSに対応したファイルをダウンロードしてください：
+          
+          - **Windows**: `KawaiiVoiceChanger-Windows.zip`
+          - **macOS**: `KawaiiVoiceChanger-macOS.zip`
+          - **Linux**: `KawaiiVoiceChanger-Linux.tar.gz`
+          
+          ## 📝 変更履歴
+          
+          詳細は[CHANGELOG.md](https://github.com/ayutaz/kawaii-voice-changer/blob/main/CHANGELOG.md)をご覧ください。
+          
+        files: |
+          ./artifacts/KawaiiVoiceChanger-Windows/*.zip
+          ./artifacts/KawaiiVoiceChanger-macOS/*.zip
+          ./artifacts/KawaiiVoiceChanger-Linux/*.tar.gz
+        draft: false
+        prerelease: false
