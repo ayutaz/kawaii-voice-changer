@@ -36,7 +36,9 @@ def generate_sine_sweep(duration: float = 3.0, sample_rate: int = 44100) -> np.n
     return audio * envelope
 
 
-def generate_voice_like_sound(duration: float = 3.0, sample_rate: int = 44100) -> np.ndarray:
+def generate_voice_like_sound(
+    duration: float = 3.0, sample_rate: int = 44100
+) -> np.ndarray:
     """Generate a simple voice-like sound using formant synthesis.
 
     Args:

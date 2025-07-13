@@ -120,7 +120,9 @@ class PlaybackControls(QWidget):
         """
         pos_min, pos_sec = divmod(int(position), 60)
         dur_min, dur_sec = divmod(int(duration), 60)
-        self.position_label.setText(f"{pos_min}:{pos_sec:02d} / {dur_min}:{dur_sec:02d}")
+        self.position_label.setText(
+            f"{pos_min}:{pos_sec:02d} / {dur_min}:{dur_sec:02d}"
+        )
 
     def set_volume(self, volume: float) -> None:
         """Set volume slider value.

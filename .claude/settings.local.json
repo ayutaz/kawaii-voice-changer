@@ -17,7 +17,8 @@
       "Bash(find:*)",
       "Bash(python3:*)",
       "Bash(python:*)",
-      "Bash(uv run ruff check:*)"
+      "Bash(uv run ruff check:*)",
+      "Bash(uv run ruff format:*)"
     ],
     "deny": []
   }
