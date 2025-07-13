@@ -23,7 +23,7 @@ class SpectrumDisplay(QWidget):
         self.sample_rate = 44100
         self.fft_size = 2048
         self.hop_size = 512
-        self.window = np.hanning(self.fft_size)
+        self.window_function = np.hanning(self.fft_size)
 
         # Data buffers
         self.audio_buffer: npt.NDArray[np.float32] | None = None
@@ -147,7 +147,7 @@ class SpectrumDisplay(QWidget):
                 break
 
             # Window and FFT
-            windowed = self.audio_buffer[start:end] * self.window
+            windowed = self.audio_buffer[start:end] * self.window_function
             spectrum = np.fft.rfft(windowed)
             magnitude = np.abs(spectrum)
 
@@ -212,10 +212,10 @@ class SpectrumDisplay(QWidget):
             frame = np.zeros(self.fft_size)
             frame[: end - start] = self.audio_buffer[start:end]
         else:
-            frame = self.audio_buffer[start:end]
+            frame = self.audio_buffer[start:end].astype(np.float64)
 
         # Apply window and compute FFT
-        windowed = frame * self.window
+        windowed = frame * self.window_function
         spectrum = np.fft.rfft(windowed)
         magnitude = np.abs(spectrum)
 

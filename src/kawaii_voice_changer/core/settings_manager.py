@@ -157,11 +157,12 @@ class SettingsManager:
         Returns:
             List of slot information dictionaries.
         """
-        return [
-            self.get_slot_info(i)
-            for i in range(self.MAX_SLOTS)
-            if self.get_slot_info(i) is not None
-        ]
+        slots = []
+        for i in range(self.MAX_SLOTS):
+            info = self.get_slot_info(i)
+            if info is not None:
+                slots.append(info)
+        return slots
 
     def set_current_slot(self, index: int) -> bool:
         """Set the current active slot.

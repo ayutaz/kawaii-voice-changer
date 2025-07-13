@@ -816,7 +816,7 @@ class MainWindow(QMainWindow):
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
                 "音声ファイルを保存",
-                str(self.config.last_directory / suggested_name),
+                str(Path(self.config.last_directory) / suggested_name) if self.config.last_directory else suggested_name,
                 "WAV Files (*.wav);;All Files (*.*)",
             )
 
