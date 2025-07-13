@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
+import numpy as np
 from PySide6.QtCore import QTimer, Signal, Slot
 from PySide6.QtGui import QAction, QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (
@@ -292,10 +293,11 @@ class MainWindow(QMainWindow):
             file_path: Loaded file path.
         """
         self.file_label.setText(Path(file_path).name)
-        self.waveform_display.set_audio_data(
-            self.processor.audio_data,
-            self.processor.sample_rate,
-        )
+        if self.processor.audio_data is not None:
+            self.waveform_display.set_audio_data(
+                self.processor.audio_data.astype(np.float32),
+                self.processor.sample_rate,
+            )
 
         if self.config.auto_play_on_load:
             self.player.start()
@@ -453,7 +455,7 @@ class MainWindow(QMainWindow):
         if files:
             self._load_file(Path(files[0]))
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, event: Any) -> None:  # type: ignore[override]
         """Handle close event.
 
         Args:

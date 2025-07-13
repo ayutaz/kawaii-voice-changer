@@ -197,6 +197,8 @@ class AudioProcessor:
             modified_f0 = self.original_f0 * self.f0_ratio
 
             # Modify spectral envelope (formant shift)
+            if self.original_sp is None:
+                return np.array([], dtype=np.float32)
             modified_sp = self.original_sp.copy()
 
             # Apply formant shifts
@@ -208,14 +210,14 @@ class AudioProcessor:
             else:
                 # Independent mode: average for now (TODO: improve)
                 avg_ratio = np.mean(list(self.formant_ratios.values()))
-                modified_sp = self._shift_formants(modified_sp, avg_ratio)
+                modified_sp = self._shift_formants(modified_sp, float(avg_ratio))
 
             # Synthesize
             synthesized = pw.synthesize(
                 modified_f0, modified_sp, self.original_ap, self.sample_rate
             )
 
-            return synthesized.astype(np.float32)
+            return synthesized.astype(np.float32)  # type: ignore[no-any-return]
 
     def get_processed_audio(self) -> npt.NDArray[np.float32]:
         """Get processed audio (using cache).

@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 import traceback
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtCore import QtMsgType, qInstallMessageHandler
 from PySide6.QtWidgets import QApplication, QMessageBox
@@ -15,7 +16,7 @@ from .utils import Config, setup_logger
 logger = setup_logger("kawaii_voice_changer")
 
 
-def qt_message_handler(msg_type: QtMsgType, context, msg: str) -> None:  # noqa: ARG001
+def qt_message_handler(msg_type: QtMsgType, context: Any, msg: str) -> None:  # noqa: ARG001
     """Handle Qt messages.
 
     Args:
@@ -77,8 +78,8 @@ def main() -> int:
 
         # Show error dialog if possible
         try:
-            app = QApplication.instance()
-            if app:
+            instance = QApplication.instance()
+            if isinstance(instance, QApplication):
                 QMessageBox.critical(
                     None,
                     "Fatal Error",
