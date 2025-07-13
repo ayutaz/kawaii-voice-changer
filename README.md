@@ -4,143 +4,155 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 
-A desktop application to find the sweet spot of "kawaii" (cute) voice by adjusting fundamental frequency (F0) and formant frequencies (F1-F3). Based on the research paper "Finding Kawaii" (arXiv:2507.06235).
+基本周波数（F0）とフォルマント周波数（F1-F3）を調整して「可愛い声」のスイートスポットを見つけるデスクトップアプリケーションです。論文「Finding Kawaii」（arXiv:2507.06235）の研究成果に基づいています。
 
-## 🌟 Features
+## 🌟 特徴
 
-- **Real-time Voice Processing**: Adjust voice parameters and hear changes instantly
-- **Independent Control**: Separate control of pitch (F0) and formants (F1-F3)
-- **Loop Playback**: Continuous playback for easy comparison
-- **Presets**: Built-in kawaii voice presets
-- **Cross-platform**: Works on Windows, macOS, and Linux
+- **リアルタイム音声処理**: パラメータを調整すると即座に音声に反映
+- **独立制御**: ピッチ（F0）とフォルマント（F1-F3）を個別に制御
+- **ループ再生**: 比較のための連続再生機能
+- **プリセット**: 可愛い声のプリセットを内蔵
+- **クロスプラットフォーム**: Windows、macOS、Linuxで動作
 
-## 📋 Requirements
+## 📋 必要要件
 
 - Python 3.12+
-- uv (for dependency management)
-- System dependencies:
-  - **Windows**: No additional requirements
+- uv（依存関係管理）
+- システム依存関係：
+  - **Windows**: 追加要件なし
   - **macOS**: `brew install portaudio libsndfile`
   - **Linux**: `sudo apt-get install libportaudio2 libsndfile1`
 
-## 🚀 Quick Start
+## 🚀 クイックスタート
 
-### Installation with uv
+### uvでのインストール
 
 ```bash
-# Clone the repository
+# リポジトリをクローン
 git clone https://github.com/ayutaz/kawaii-voice-changer.git
 cd kawaii-voice-changer
 
-# Install uv if you haven't already
+# uvをインストール（未インストールの場合）
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install dependencies
+# 依存関係をインストール
 uv sync
 
-# Run the application
+# アプリケーションを実行
 uv run kawaii-voice-changer
 ```
 
-### Development Setup
+### 開発環境のセットアップ
 
 ```bash
-# Install with development dependencies
+# 開発用依存関係を含めてインストール
 uv sync --all-extras
 
-# Run tests
+# テストを実行
 uv run pytest
 
-# Run linting
+# リンティング
 uv run ruff check .
 uv run ruff format .
 
-# Type checking
+# 型チェック
 uv run mypy src
 ```
 
-## 🎮 Usage
+## 🎮 使い方
 
-1. **Load Audio File**: Drag and drop an audio file or use the file dialog
-2. **Adjust Parameters**:
-   - **F0 (Pitch)**: Changes voice pitch (0.5x - 2.0x)
-   - **F1-F3 (Formants)**: Changes voice characteristics
-   - **Link Mode**: Adjust all formants together
-3. **Apply Presets**: Choose from built-in kawaii voice presets
-4. **Playback Control**: Auto-loops for easy comparison
+1. **音声ファイルの読み込み**: ファイルをドラッグ&ドロップまたはファイルダイアログで選択
+2. **パラメータ調整**:
+   - **F0（ピッチ）**: 声の高さを変更（0.5倍〜2.0倍）
+   - **F1-F3（フォルマント）**: 声の特性を変更
+   - **連動モード**: すべてのフォルマントを一括調整
+3. **プリセット適用**: 内蔵の可愛い声プリセットから選択
+4. **再生制御**: 自動ループで簡単に比較
 
-## 🏗️ Project Structure
+## 🏗️ プロジェクト構造
 
 ```
 kawaii-voice-changer/
 ├── src/
 │   └── kawaii_voice_changer/
-│       ├── core/          # Audio processing modules
-│       ├── gui/           # GUI components
-│       └── utils/         # Utilities
-├── tests/                 # Test files
-├── docs/                  # Documentation
-└── resources/            # Icons, assets
+│       ├── core/          # 音声処理モジュール
+│       ├── gui/           # GUIコンポーネント
+│       └── utils/         # ユーティリティ
+├── tests/                 # テストファイル
+├── docs/                  # ドキュメント
+└── resources/            # アイコン、アセット
 ```
 
-## 🔧 Building Executable
+## 🔧 実行ファイルのビルド
 
 ```bash
-# Build standalone executable
-uv run pyinstaller --name=KawaiiVoiceChanger \
-                   --onefile \
-                   --windowed \
-                   --add-data "resources:resources" \
-                   src/kawaii_voice_changer/main.py
+# スタンドアロン実行ファイルをビルド
+uv run pyinstaller kawaii_voice_changer.spec --clean
+
+# またはMakefileを使用
+make build
 ```
 
-## 🧪 Testing
+## 🧪 テスト
 
 ```bash
-# Run all tests
-uv run pytest
+# すべてのテストを実行
+make test
 
-# Run with coverage
-uv run pytest --cov=src --cov-report=html
+# カバレッジ付きで実行
+make test-cov
 
-# Run specific test
+# 特定のテストを実行
 uv run pytest tests/test_audio_processor.py
 ```
 
-## 📚 Documentation
+## 📚 ドキュメント
 
-- [Requirements Specification](docs/requirements-specification.md)
-- [Technical Selection](docs/technical-selection.md)
-- [Development Plan](docs/development-plan.md)
+- [要件定義書](docs/requirements-specification.md)
+- [技術選定書](docs/technical-selection.md)
+- [開発計画書](docs/development-plan.md)
 
-## 🤝 Contributing
+## 🤝 コントリビュート
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. リポジトリをフォーク
+2. フィーチャーブランチを作成（`git checkout -b feature/amazing-feature`）
+3. 変更をコミット（`git commit -m 'Add some amazing feature'`）
+4. ブランチにプッシュ（`git push origin feature/amazing-feature`）
+5. プルリクエストを作成
 
-### Pre-commit Hooks
+### pre-commitフック
 
 ```bash
-# Install pre-commit hooks
-uv run pre-commit install
+# pre-commitフックをインストール
+make pre-commit-install
 
-# Run manually
-uv run pre-commit run --all-files
+# 手動で実行
+make pre-commit
 ```
 
-## 📄 License
+## 📄 ライセンス
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+このプロジェクトはMITライセンスの下で公開されています。詳細は[LICENSE](LICENSE)ファイルを参照してください。
 
-## 🙏 Acknowledgments
+## 🙏 謝辞
 
-- Based on the research paper "Finding Kawaii: A Study of Kawaii Vocal Aesthetics in Modern Japanese Popular Music" (arXiv:2507.06235)
-- Uses [WORLD Vocoder](https://github.com/mmorise/World) for high-quality voice analysis and synthesis
-- Built with [PySide6](https://www.qt.io/qt-for-python) for cross-platform GUI
+- 論文「Finding Kawaii: A Study of Kawaii Vocal Aesthetics in Modern Japanese Popular Music」（arXiv:2507.06235）に基づいています
+- 高品質な音声分析・合成には[WORLD Vocoder](https://github.com/mmorise/World)を使用
+- クロスプラットフォームGUIには[PySide6](https://www.qt.io/qt-for-python)を使用
 
-## 📮 Contact
+## 📮 お問い合わせ
 
-- GitHub Issues: [Report bugs or request features](https://github.com/ayutaz/kawaii-voice-changer/issues)
+- GitHub Issues: [バグ報告や機能リクエスト](https://github.com/ayutaz/kawaii-voice-changer/issues)
+
+## 🛠️ 開発用コマンド
+
+```bash
+# よく使うコマンド
+make help          # 利用可能なコマンドを表示
+make install       # 依存関係をインストール
+make run           # アプリケーションを実行
+make test          # テストを実行
+make lint          # リンティングを実行
+make format        # コードをフォーマット
+make clean         # ビルド成果物をクリーン
+```

@@ -51,7 +51,7 @@ build = [
 ]
 
 [project.scripts]
-kawaii-voice-changer = "kawaii_voice_changer.main:main"
+kawaii-voice-changer = "kawaii_voice_changer.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/ayutaz/kawaii-voice-changer"

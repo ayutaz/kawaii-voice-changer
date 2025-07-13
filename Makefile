@@ -57,7 +57,7 @@ build:
 
 # Run application
 run:
-	uv run python -m kawaii_voice_changer.main
+	uv run python -m kawaii_voice_changer
 
 # Generate test audio files
 generate-audio:
