@@ -31,6 +31,8 @@ MANIFEST
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
+# Exception for our main spec file
+!kawaii_voice_changer.spec
 
 # Installer logs
 pip-log.txt
