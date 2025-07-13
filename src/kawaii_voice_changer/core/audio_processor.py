@@ -32,6 +32,7 @@ class AudioProcessor:
         self.f0_ratio = 1.0
         self.formant_ratios = {"f1": 1.0, "f2": 1.0, "f3": 1.0}
         self.formant_link = True  # Formant link mode
+        self.bypass_mode = False  # A/B comparison mode
 
         # Processed audio cache
         self._processed_audio: npt.NDArray[np.float32] | None = None
@@ -149,6 +150,16 @@ class AudioProcessor:
                     self.formant_ratios[f] = base_ratio
                 self._invalidate_cache()
 
+    def set_bypass_mode(self, enabled: bool) -> None:
+        """Set bypass mode for A/B comparison.
+
+        Args:
+            enabled: True to bypass processing (return original).
+        """
+        with self._param_lock:
+            self.bypass_mode = enabled
+            self._invalidate_cache()
+
     def _shift_formants(
         self, sp: npt.NDArray[np.float64], ratio: float
     ) -> npt.NDArray[np.float64]:
@@ -183,16 +194,154 @@ class AudioProcessor:
 
         return shifted_sp
 
+    def _shift_formants_independent(
+        self, sp: npt.NDArray[np.float64]
+    ) -> npt.NDArray[np.float64]:
+        """Shift formants independently based on frequency bands.
+
+        This method applies different shift ratios to different frequency bands
+        corresponding to F1, F2, and F3 formants.
+
+        Args:
+            sp: Original spectral envelope.
+
+        Returns:
+            Spectral envelope with independent formant shifts.
+        """
+        # Define formant frequency bands (in Hz)
+        # These are approximate ranges for adult speech
+        f1_range = (200, 1000)   # F1 typically 200-1000 Hz
+        f2_range = (800, 2500)   # F2 typically 800-2500 Hz
+        f3_range = (2000, 4000)  # F3 typically 2000-4000 Hz
+
+        # Get frequency axis
+        freq_bins = sp.shape[1]
+        nyquist = self.sample_rate / 2
+        freqs = np.linspace(0, nyquist, freq_bins)
+
+        # Create masks for each formant band
+        f1_mask = (freqs >= f1_range[0]) & (freqs <= f1_range[1])
+        f2_mask = (freqs >= f2_range[0]) & (freqs <= f2_range[1])
+        f3_mask = (freqs >= f3_range[0]) & (freqs <= f3_range[1])
+
+        shifted_sp = np.zeros_like(sp)
+
+        for i in range(sp.shape[0]):
+            # Start with original spectrum
+            frame_sp = sp[i].copy()
+
+            # Apply shifts to each formant band
+            # F1 shift
+            if np.any(f1_mask):
+                f1_indices = np.where(f1_mask)[0]
+                shifted_f1 = self._apply_local_shift(
+                    frame_sp, f1_indices, self.formant_ratios["f1"]
+                )
+                frame_sp[f1_mask] = shifted_f1[f1_mask]
+
+            # F2 shift
+            if np.any(f2_mask):
+                f2_indices = np.where(f2_mask)[0]
+                shifted_f2 = self._apply_local_shift(
+                    frame_sp, f2_indices, self.formant_ratios["f2"]
+                )
+                # Blend with F1 in overlap region
+                overlap_mask = f1_mask & f2_mask
+                if np.any(overlap_mask):
+                    frame_sp[overlap_mask] = (
+                        frame_sp[overlap_mask] + shifted_f2[overlap_mask]
+                    ) / 2
+                else:
+                    frame_sp[f2_mask] = shifted_f2[f2_mask]
+
+            # F3 shift
+            if np.any(f3_mask):
+                f3_indices = np.where(f3_mask)[0]
+                shifted_f3 = self._apply_local_shift(
+                    frame_sp, f3_indices, self.formant_ratios["f3"]
+                )
+                # Blend with F2 in overlap region
+                overlap_mask = f2_mask & f3_mask
+                if np.any(overlap_mask):
+                    frame_sp[overlap_mask] = (
+                        frame_sp[overlap_mask] + shifted_f3[overlap_mask]
+                    ) / 2
+                else:
+                    frame_sp[f3_mask] = shifted_f3[f3_mask]
+
+            shifted_sp[i] = frame_sp
+
+        return shifted_sp
+
+    def _apply_local_shift(
+        self,
+        spectrum: npt.NDArray[np.float64],
+        indices: npt.NDArray[np.intp],
+        ratio: float
+    ) -> npt.NDArray[np.float64]:
+        """Apply frequency shift to a local region of the spectrum.
+
+        Args:
+            spectrum: Full spectrum array.
+            indices: Indices of the region to shift.
+            ratio: Shift ratio.
+
+        Returns:
+            Spectrum with local shift applied.
+        """
+        if ratio == 1.0:
+            return spectrum
+
+        shifted = spectrum.copy()
+
+        # Extract the local region
+        local_spectrum = spectrum[indices]
+
+        # Create local frequency mapping
+        local_freqs = np.arange(len(local_spectrum))
+        shifted_freqs = local_freqs / ratio
+
+        # Interpolate
+        shifted_local = np.interp(
+            local_freqs,
+            shifted_freqs,
+            local_spectrum,
+            left=local_spectrum[0],
+            right=local_spectrum[-1]
+        )
+
+        # Apply smoothing at boundaries to avoid discontinuities
+        if len(indices) > 10:
+            # Create smooth transition at boundaries
+            fade_length = min(5, len(indices) // 4)
+            fade_in = np.linspace(0, 1, fade_length)
+            fade_out = np.linspace(1, 0, fade_length)
+
+            shifted_local[:fade_length] = (
+                spectrum[indices[:fade_length]] * (1 - fade_in) +
+                shifted_local[:fade_length] * fade_in
+            )
+            shifted_local[-fade_length:] = (
+                spectrum[indices[-fade_length:]] * (1 - fade_out) +
+                shifted_local[-fade_length:] * fade_out
+            )
+
+        shifted[indices] = shifted_local
+        return shifted
+
     def _process_audio(self) -> npt.NDArray[np.float32]:
         """Process audio with current parameters.
 
         Returns:
             Processed audio data.
         """
-        if self.original_f0 is None:
+        if self.original_f0 is None or self.audio_data is None:
             return np.array([], dtype=np.float32)
 
         with self._param_lock:
+            # Bypass mode: return original audio
+            if self.bypass_mode:
+                return self.audio_data.astype(np.float32)
             # Modify F0
             modified_f0 = self.original_f0 * self.f0_ratio
 
@@ -208,9 +357,8 @@ class AudioProcessor:
                     modified_sp, self.formant_ratios["f1"]
                 )
             else:
-                # Independent mode: average for now (TODO: improve)
-                avg_ratio = np.mean(list(self.formant_ratios.values()))
-                modified_sp = self._shift_formants(modified_sp, float(avg_ratio))
+                # Independent mode: shift each formant separately
+                modified_sp = self._shift_formants_independent(modified_sp)
 
             # Synthesize
             synthesized = pw.synthesize(
@@ -284,3 +432,35 @@ class AudioProcessor:
         if self.audio_data is None:
             return 0.0
         return len(self.audio_data) / self.sample_rate
+
+    def export_audio(self, file_path: str | Path, processed: bool = True) -> bool:
+        """Export audio to file.
+
+        Args:
+            file_path: Output file path.
+            processed: Export processed audio if True, original if False.
+
+        Returns:
+            True if successful, False otherwise.
+        """
+        try:
+            file_path = Path(file_path)
+
+            if processed:
+                audio_data = self.get_processed_audio()
+            else:
+                if self.audio_data is None:
+                    return False
+                audio_data = self.audio_data.astype(np.float32)
+
+            if len(audio_data) == 0:
+                return False
+
+            # Write audio file
+            sf.write(str(file_path), audio_data, self.sample_rate)
+
+            return True
+
+        except Exception as e:
+            print(f"Error exporting audio: {e}")
+            return False

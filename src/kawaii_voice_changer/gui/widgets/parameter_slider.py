@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QSlider, QVBoxLayout, QWidget
 
 
@@ -36,6 +36,7 @@ class ParameterSlider(QWidget):
         self.min_value = min_value
         self.max_value = max_value
         self.step = step
+        self.default_value = default_value
 
         # Calculate slider range based on step
         self.slider_max = int((max_value - min_value) / step)
@@ -60,6 +61,10 @@ class ParameterSlider(QWidget):
         label_layout.addStretch()
 
         self.value_label = QLabel()
+        self.value_label.setMinimumWidth(60)
+        self.value_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        # Store original style
+        self.original_style = self.value_label.styleSheet()
         label_layout.addWidget(self.value_label)
 
         layout.addLayout(label_layout)
@@ -70,6 +75,11 @@ class ParameterSlider(QWidget):
         self.slider.setMaximum(self.slider_max)
         self.slider.valueChanged.connect(self._on_slider_changed)
         layout.addWidget(self.slider)
+
+        # Setup animation for visual feedback
+        self.highlight_timer = QTimer()
+        self.highlight_timer.timeout.connect(self._reset_highlight)
+        self.highlight_timer.setSingleShot(True)
 
         # Set default value
         self.set_value(default_value)
@@ -83,6 +93,10 @@ class ParameterSlider(QWidget):
         # Convert slider position to actual value
         actual_value = self.min_value + (slider_value * self.step)
         self.value_label.setText(f"{actual_value:.2f}x")
+
+        # Visual feedback
+        self._show_highlight()
+
         self.value_changed.emit(actual_value)
 
     def value(self) -> float:
@@ -116,3 +130,51 @@ class ParameterSlider(QWidget):
         self.slider.setEnabled(enabled)
         self.label.setEnabled(enabled)
         self.value_label.setEnabled(enabled)
+
+    def reset(self) -> None:
+        """Reset slider to default value."""
+        self.set_value(self.default_value)
+        # Show reset visual feedback
+        self._show_reset_highlight()
+
+    def _show_highlight(self) -> None:
+        """Show visual feedback for value change."""
+        # Stop any existing timer
+        self.highlight_timer.stop()
+
+        # Apply highlight style
+        self.value_label.setStyleSheet("""
+            QLabel {
+                background-color: #2196F3;
+                color: white;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+        """)
+
+        # Start timer to reset
+        self.highlight_timer.start(500)
+
+    def _show_reset_highlight(self) -> None:
+        """Show visual feedback for reset."""
+        # Stop any existing timer
+        self.highlight_timer.stop()
+
+        # Apply reset highlight style
+        self.value_label.setStyleSheet("""
+            QLabel {
+                background-color: #4CAF50;
+                color: white;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+        """)
+
+        # Start timer to reset
+        self.highlight_timer.start(800)
+
+    def _reset_highlight(self) -> None:
+        """Reset visual highlight to normal."""
+        self.value_label.setStyleSheet(self.original_style)

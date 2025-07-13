@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QSlider,
+    QSpinBox,
     QWidget,
 )
 
@@ -21,6 +22,7 @@ class PlaybackControls(QWidget):
     stop_clicked = Signal()
     volume_changed = Signal(float)
     loop_changed = Signal(bool)
+    crossfade_changed = Signal(int)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize playback controls.
@@ -57,6 +59,17 @@ class PlaybackControls(QWidget):
         self.loop_checkbox.setChecked(True)
         self.loop_checkbox.toggled.connect(self.loop_changed.emit)
         layout.addWidget(self.loop_checkbox)
+
+        # Crossfade spin box
+        layout.addWidget(QLabel("クロスフェード:"))
+        self.crossfade_spinbox = QSpinBox()
+        self.crossfade_spinbox.setMinimum(0)
+        self.crossfade_spinbox.setMaximum(500)
+        self.crossfade_spinbox.setValue(50)
+        self.crossfade_spinbox.setSuffix(" ms")
+        self.crossfade_spinbox.setToolTip("ループポイントでのクロスフェード時間")
+        self.crossfade_spinbox.valueChanged.connect(self.crossfade_changed.emit)
+        layout.addWidget(self.crossfade_spinbox)
 
         # Volume controls
         layout.addWidget(QLabel("音量:"))
@@ -139,3 +152,19 @@ class PlaybackControls(QWidget):
             enabled: Loop enabled state.
         """
         self.loop_checkbox.setChecked(enabled)
+
+    def set_crossfade(self, crossfade_ms: int) -> None:
+        """Set crossfade spinbox value.
+
+        Args:
+            crossfade_ms: Crossfade duration in milliseconds.
+        """
+        self.crossfade_spinbox.setValue(crossfade_ms)
+
+    def get_crossfade(self) -> int:
+        """Get current crossfade value.
+
+        Returns:
+            Crossfade duration in milliseconds.
+        """
+        return self.crossfade_spinbox.value()

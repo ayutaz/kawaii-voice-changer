@@ -36,6 +36,12 @@ class Config:
     cache_processed_audio: bool = True
     show_advanced_controls: bool = False
 
+    # Parameter settings
+    last_f0_ratio: float = 1.0
+    last_formant_ratios: dict[str, float] = field(default_factory=lambda: {"f1": 1.0, "f2": 1.0, "f3": 1.0})
+    last_formant_link: bool = True
+    last_loop_crossfade_ms: int = 50
+
     def save(self, path: Path) -> None:
         """Save configuration to JSON file.
 
@@ -88,6 +94,10 @@ class Config:
             "auto_play_on_load": self.auto_play_on_load,
             "cache_processed_audio": self.cache_processed_audio,
             "show_advanced_controls": self.show_advanced_controls,
+            "last_f0_ratio": self.last_f0_ratio,
+            "last_formant_ratios": self.last_formant_ratios,
+            "last_formant_link": self.last_formant_link,
+            "last_loop_crossfade_ms": self.last_loop_crossfade_ms,
         }
 
     @classmethod
@@ -115,6 +125,10 @@ class Config:
             auto_play_on_load=data.get("auto_play_on_load", True),
             cache_processed_audio=data.get("cache_processed_audio", True),
             show_advanced_controls=data.get("show_advanced_controls", False),
+            last_f0_ratio=data.get("last_f0_ratio", 1.0),
+            last_formant_ratios=data.get("last_formant_ratios", {"f1": 1.0, "f2": 1.0, "f3": 1.0}),
+            last_formant_link=data.get("last_formant_link", True),
+            last_loop_crossfade_ms=data.get("last_loop_crossfade_ms", 50),
         )
 
     def add_recent_file(self, file_path: str) -> None:
