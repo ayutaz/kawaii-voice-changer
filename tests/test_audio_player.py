@@ -154,16 +154,23 @@ class TestAudioPlayer:
 
     def test_playback_control(self, player: AudioPlayer) -> None:
         """Test playback control methods."""
-        # Start should set is_playing
-        player.start()
-        assert player.is_playing
+        try:
+            # Start should set is_playing
+            player.start()
+            assert player.is_playing
 
-        # Stop should clear is_playing and reset position
-        player.play_position = 1000
-        player.stop()
-        assert not player.is_playing
-        assert player.play_position == 0
+            # Stop should clear is_playing and reset position
+            player.play_position = 1000
+            player.stop()
+            assert not player.is_playing
+            assert player.play_position == 0
 
-        # Cleanup
-        if player.stream:
-            player.stream.close()
+            # Cleanup
+            if player.stream:
+                player.stream.close()
+        except Exception as e:
+            # Skip test if no audio device available (common in CI)
+            if "Error querying device" in str(e):
+                pytest.skip("No audio device available in test environment")
+            else:
+                raise
