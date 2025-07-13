@@ -33,7 +33,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libportaudio2 libsndfile1 libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 xvfb
+        sudo apt-get install -y libportaudio2 libsndfile1 libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 xvfb libegl1-mesa libgl1-mesa-glx
 
     - name: Install system dependencies (macOS)
       if: matrix.os == 'macos-latest'
@@ -138,7 +138,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libportaudio2 libsndfile1 libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 xvfb libasound2-dev
+        sudo apt-get install -y libportaudio2 libsndfile1 libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 xvfb libegl1-mesa libgl1-mesa-glx libasound2-dev
     
     - name: Install system dependencies (macOS)
       if: matrix.os == 'macos-latest'

@@ -1,7 +1,7 @@
 """Tests for GUI widgets."""
 
 import pytest
-from PySide6.QtTest import QSignalSpy
+from PySide6.QtCore import QSignalSpy
 from PySide6.QtWidgets import QApplication
 
 from kawaii_voice_changer.gui.widgets import (
