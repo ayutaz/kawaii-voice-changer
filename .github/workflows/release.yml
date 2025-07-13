@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+  build-and-upload:
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset_name: KawaiiVoiceChanger-Linux
+            asset_extension: ''
+          - os: windows-latest
+            asset_name: KawaiiVoiceChanger-Windows
+            asset_extension: .exe
+          - os: macos-latest
+            asset_name: KawaiiVoiceChanger-macOS
+            asset_extension: .app
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
+        cache-dependency-glob: "pyproject.toml"
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libportaudio2 libsndfile1
+
+    - name: Install system dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install portaudio libsndfile
+
+    - name: Install project with build dependencies
+      run: |
+        uv sync --extra build
+
+    - name: Build executable
+      run: |
+        uv run pyinstaller --name=KawaiiVoiceChanger \
+                    --onefile \
+                    --windowed \
+                    --add-data "resources:resources" \
+                    --icon=resources/icon.ico \
+                    src/kawaii_voice_changer/main.py
+
+    - name: Prepare release asset
+      run: |
+        cd dist
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          7z a -tzip ../${{ matrix.asset_name }}.zip KawaiiVoiceChanger.exe
+        elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+          zip -r ../${{ matrix.asset_name }}.zip KawaiiVoiceChanger.app
+        else
+          zip ../${{ matrix.asset_name }}.zip KawaiiVoiceChanger
+        fi
+      shell: bash
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./${{ matrix.asset_name }}.zip
+        asset_name: ${{ matrix.asset_name }}.zip
+        asset_content_type: application/zip

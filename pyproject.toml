@@ -1,0 +1,140 @@
+[project]
+name = "kawaii-voice-changer"
+version = "0.1.0"
+description = "A desktop application to find the sweet spot of kawaii voice by adjusting fundamental frequency and formant frequencies"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "ayutaz", email = ""},
+]
+keywords = ["audio", "voice", "pyworld", "signal-processing", "kawaii"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio :: Analysis",
+    "Topic :: Multimedia :: Sound/Audio :: Sound Synthesis",
+]
+
+dependencies = [
+    "pyworld-prebuilt>=0.3.5",
+    "sounddevice>=0.4.6",
+    "soundfile>=0.12.1",
+    "numpy>=1.24.3,<2.0",
+    "scipy>=1.10.1",
+    "PySide6>=6.6.1",
+    "pyqtgraph>=0.13.3",
+    "matplotlib>=3.7.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.3",
+    "pytest-cov>=4.1.0",
+    "pytest-qt>=4.2.0",
+    "ruff>=0.1.8",
+    "mypy>=1.7.1",
+    "bandit>=1.7.5",
+    "safety>=2.3.5",
+]
+docs = [
+    "sphinx>=7.2.6",
+    "sphinx-rtd-theme>=2.0.0",
+]
+build = [
+    "pyinstaller>=6.2.0",
+    "wheel>=0.42.0",
+    "build>=1.0.3",
+]
+
+[project.scripts]
+kawaii-voice-changer = "kawaii_voice_changer.main:main"
+
+[project.urls]
+Homepage = "https://github.com/ayutaz/kawaii-voice-changer"
+Repository = "https://github.com/ayutaz/kawaii-voice-changer"
+Issues = "https://github.com/ayutaz/kawaii-voice-changer/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/.github",
+    "/docs",
+    "/tests",
+    "/.gitignore",
+    "/.pre-commit-config.yaml",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kawaii_voice_changer"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.4.3",
+    "pytest-cov>=4.1.0",
+    "pytest-qt>=4.2.0",
+    "ruff>=0.1.8",
+    "mypy>=1.7.1",
+    "bandit>=1.7.5",
+    "safety>=2.3.5",
+    "sphinx>=7.2.6",
+    "sphinx-rtd-theme>=2.0.0",
+    "pyinstaller>=6.2.0",
+    "wheel>=0.42.0",
+    "build>=1.0.3",
+    "pre-commit>=3.5.0",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "ARG", # flake8-unused-arguments
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.ruff.isort]
+known-first-party = ["kawaii_voice_changer"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers"
+testpaths = [
+    "tests",
+]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*", "*/test_*.py"]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false

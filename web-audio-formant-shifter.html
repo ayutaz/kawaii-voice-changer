@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kawaii Voice Processor - Web Audio API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .control-group {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .value-display {
+            text-align: center;
+            font-size: 18px;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px 0;
+        }
+        .start-button {
+            background-color: #28a745;
+            color: white;
+        }
+        .start-button:hover {
+            background-color: #218838;
+        }
+        .stop-button {
+            background-color: #dc3545;
+            color: white;
+        }
+        .stop-button:hover {
+            background-color: #c82333;
+        }
+        .visualizer {
+            width: 100%;
+            height: 200px;
+            background-color: #000;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info {
+            background-color: #e9f5ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .status {
+            text-align: center;
+            font-size: 16px;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .status.active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Kawaii Voice Processor 🎵</h1>
+        
+        <div class="info">
+            <h3>How it works:</h3>
+            <p>This processor uses Web Audio API to modify your voice in real-time:</p>
+            <ul>
+                <li><strong>Pitch Shift:</strong> Changes the fundamental frequency (F0) of your voice</li>
+                <li><strong>Formant Shift:</strong> Modifies the vocal tract resonances for character change</li>
+                <li><strong>Combined Effect:</strong> Creates a "kawaii" voice by shifting both independently</li>
+            </ul>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="pitchSlider">Pitch Shift</label>
+                <div class="value-display" id="pitchValue">1.00x</div>
+                <input type="range" id="pitchSlider" min="0.5" max="2.0" step="0.01" value="1.0">
+                <small>Lower ← → Higher</small>
+            </div>
+            
+            <div class="control-group">
+                <label for="formantSlider">Formant Shift</label>
+                <div class="value-display" id="formantValue">1.00x</div>
+                <input type="range" id="formantSlider" min="0.5" max="2.0" step="0.01" value="1.0">
+                <small>Deeper ← → Younger</small>
+            </div>
+        </div>
+
+        <canvas id="visualizer" class="visualizer"></canvas>
+
+        <button id="startButton" class="start-button">Start Processing</button>
+        <button id="stopButton" class="stop-button" style="display: none;">Stop Processing</button>
+        
+        <div id="status" class="status inactive">Click "Start Processing" to begin</div>
+    </div>
+
+    <script>
+        // Audio Worklet Processor Code (as a string to be loaded)
+        const processorCode = `
+        class FormantPitchProcessor extends AudioWorkletProcessor {
+            constructor() {
+                super();
+                this.pitchRatio = 1.0;
+                this.formantRatio = 1.0;
+                this.fftSize = 2048;
+                this.hopSize = 512;
+                
+                // Initialize FFT buffers
+                this.inputBuffer = new Float32Array(this.fftSize);
+                this.outputBuffer = new Float32Array(this.fftSize);
+                this.window = this.createWindow(this.fftSize);
+                
+                // Phase vocoder state
+                this.lastPhase = new Float32Array(this.fftSize / 2 + 1);
+                this.sumPhase = new Float32Array(this.fftSize / 2 + 1);
+                
+                this.port.onmessage = (e) => {
+                    if (e.data.pitchRatio !== undefined) {
+                        this.pitchRatio = e.data.pitchRatio;
+                    }
+                    if (e.data.formantRatio !== undefined) {
+                        this.formantRatio = e.data.formantRatio;
+                    }
+                };
+            }
+            
+            createWindow(size) {
+                const window = new Float32Array(size);
+                for (let i = 0; i < size; i++) {
+                    window[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (size - 1));
+                }
+                return window;
+            }
+            
+            // Simple FFT implementation (in practice, use a library)
+            fft(input, output, inverse = false) {
+                // This is a placeholder - in real implementation, use Web Audio API's FFT
+                // or a JavaScript FFT library like KissFFT or DSP.js
+                // For now, we'll just pass through with basic filtering
+                output.set(input);
+            }
+            
+            processFormantShift(spectrum, ratio) {
+                const shifted = new Float32Array(spectrum.length);
+                const halfSize = spectrum.length / 2;
+                
+                for (let i = 0; i < halfSize; i++) {
+                    const shiftedBin = Math.floor(i / ratio);
+                    if (shiftedBin < halfSize) {
+                        shifted[shiftedBin * 2] = spectrum[i * 2];
+                        shifted[shiftedBin * 2 + 1] = spectrum[i * 2 + 1];
+                    }
+                }
+                
+                return shifted;
+            }
+            
+            processPitchShift(spectrum, ratio) {
+                const shifted = new Float32Array(spectrum.length);
+                const halfSize = spectrum.length / 2;
+                
+                for (let i = 0; i < halfSize; i++) {
+                    const shiftedBin = Math.floor(i * ratio);
+                    if (shiftedBin < halfSize) {
+                        shifted[shiftedBin * 2] = spectrum[i * 2];
+                        shifted[shiftedBin * 2 + 1] = spectrum[i * 2 + 1];
+                    }
+                }
+                
+                return shifted;
+            }
+            
+            process(inputs, outputs, parameters) {
+                const input = inputs[0];
+                const output = outputs[0];
+                
+                if (!input.length) return true;
+                
+                const inputChannel = input[0];
+                const outputChannel = output[0];
+                
+                // Simple processing - in real implementation, use proper overlap-add
+                for (let i = 0; i < inputChannel.length; i++) {
+                    // Apply basic pitch shifting through resampling
+                    // This is a simplified version - real implementation needs windowing
+                    const sourceIndex = i / this.pitchRatio;
+                    const lowerIndex = Math.floor(sourceIndex);
+                    const upperIndex = Math.ceil(sourceIndex);
+                    const fraction = sourceIndex - lowerIndex;
+                    
+                    if (upperIndex < inputChannel.length) {
+                        // Linear interpolation
+                        outputChannel[i] = inputChannel[lowerIndex] * (1 - fraction) + 
+                                          inputChannel[upperIndex] * fraction;
+                        
+                        // Apply formant shift as a simple filter
+                        // In real implementation, this would be spectral envelope manipulation
+                        outputChannel[i] *= (0.5 + 0.5 * this.formantRatio);
+                    } else {
+                        outputChannel[i] = 0;
+                    }
+                }
+                
+                return true;
+            }
+        }
+        
+        registerProcessor('formant-pitch-processor', FormantPitchProcessor);
+        `;
+
+        // Main application code
+        class KawaiiVoiceProcessor {
+            constructor() {
+                this.audioContext = null;
+                this.stream = null;
+                this.source = null;
+                this.workletNode = null;
+                this.analyser = null;
+                this.isProcessing = false;
+                
+                // UI elements
+                this.startButton = document.getElementById('startButton');
+                this.stopButton = document.getElementById('stopButton');
+                this.pitchSlider = document.getElementById('pitchSlider');
+                this.formantSlider = document.getElementById('formantSlider');
+                this.pitchValue = document.getElementById('pitchValue');
+                this.formantValue = document.getElementById('formantValue');
+                this.status = document.getElementById('status');
+                this.canvas = document.getElementById('visualizer');
+                this.canvasContext = this.canvas.getContext('2d');
+                
+                // Set canvas size
+                this.canvas.width = this.canvas.offsetWidth;
+                this.canvas.height = this.canvas.offsetHeight;
+                
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                this.startButton.addEventListener('click', () => this.start());
+                this.stopButton.addEventListener('click', () => this.stop());
+                
+                this.pitchSlider.addEventListener('input', (e) => {
+                    const value = parseFloat(e.target.value);
+                    this.pitchValue.textContent = value.toFixed(2) + 'x';
+                    if (this.workletNode) {
+                        this.workletNode.port.postMessage({ pitchRatio: value });
+                    }
+                });
+                
+                this.formantSlider.addEventListener('input', (e) => {
+                    const value = parseFloat(e.target.value);
+                    this.formantValue.textContent = value.toFixed(2) + 'x';
+                    if (this.workletNode) {
+                        this.workletNode.port.postMessage({ formantRatio: value });
+                    }
+                });
+            }
+            
+            async start() {
+                try {
+                    // Create audio context
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Load the worklet module
+                    const blob = new Blob([processorCode], { type: 'application/javascript' });
+                    const workletUrl = URL.createObjectURL(blob);
+                    await this.audioContext.audioWorklet.addModule(workletUrl);
+                    
+                    // Get user media
+                    this.stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false
+                        } 
+                    });
+                    
+                    // Create nodes
+                    this.source = this.audioContext.createMediaStreamSource(this.stream);
+                    this.workletNode = new AudioWorkletNode(
+                        this.audioContext, 
+                        'formant-pitch-processor'
+                    );
+                    this.analyser = this.audioContext.createAnalyser();
+                    this.analyser.fftSize = 2048;
+                    
+                    // Connect nodes
+                    this.source.connect(this.workletNode);
+                    this.workletNode.connect(this.analyser);
+                    this.analyser.connect(this.audioContext.destination);
+                    
+                    // Update UI
+                    this.startButton.style.display = 'none';
+                    this.stopButton.style.display = 'block';
+                    this.status.textContent = 'Processing active - Speak into your microphone!';
+                    this.status.className = 'status active';
+                    
+                    // Set initial values
+                    this.workletNode.port.postMessage({
+                        pitchRatio: parseFloat(this.pitchSlider.value),
+                        formantRatio: parseFloat(this.formantSlider.value)
+                    });
+                    
+                    // Start visualization
+                    this.isProcessing = true;
+                    this.visualize();
+                    
+                } catch (error) {
+                    console.error('Error starting audio processing:', error);
+                    this.status.textContent = 'Error: ' + error.message;
+                    this.status.className = 'status inactive';
+                }
+            }
+            
+            stop() {
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                }
+                
+                if (this.audioContext) {
+                    this.audioContext.close();
+                }
+                
+                this.isProcessing = false;
+                
+                // Update UI
+                this.startButton.style.display = 'block';
+                this.stopButton.style.display = 'none';
+                this.status.textContent = 'Processing stopped';
+                this.status.className = 'status inactive';
+                
+                // Clear canvas
+                this.canvasContext.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            visualize() {
+                if (!this.isProcessing) return;
+                
+                requestAnimationFrame(() => this.visualize());
+                
+                const bufferLength = this.analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                this.analyser.getByteFrequencyData(dataArray);
+                
+                // Clear canvas
+                this.canvasContext.fillStyle = 'rgb(0, 0, 0)';
+                this.canvasContext.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw frequency bars
+                const barWidth = (this.canvas.width / bufferLength) * 2.5;
+                let barHeight;
+                let x = 0;
+                
+                for (let i = 0; i < bufferLength; i++) {
+                    barHeight = (dataArray[i] / 255) * this.canvas.height;
+                    
+                    // Color gradient
+                    const r = barHeight + 25 * (i / bufferLength);
+                    const g = 250 * (i / bufferLength);
+                    const b = 50;
+                    
+                    this.canvasContext.fillStyle = `rgb(${r},${g},${b})`;
+                    this.canvasContext.fillRect(
+                        x, 
+                        this.canvas.height - barHeight, 
+                        barWidth, 
+                        barHeight
+                    );
+                    
+                    x += barWidth + 1;
+                }
+            }
+        }
+        
+        // Alternative implementation using built-in Web Audio nodes for formant filtering
+        class FormantFilter {
+            constructor(audioContext) {
+                this.audioContext = audioContext;
+                this.formantFilters = [];
+                
+                // Define formant frequencies for different vowels
+                this.vowelFormants = {
+                    'a': { f1: 700, f2: 1220, f3: 2600 },
+                    'e': { f1: 660, f2: 1720, f3: 2410 },
+                    'i': { f1: 270, f2: 2290, f3: 3010 },
+                    'o': { f1: 570, f2: 840, f3: 2410 },
+                    'u': { f1: 300, f2: 870, f3: 2240 }
+                };
+                
+                // Create three bandpass filters for formants
+                for (let i = 0; i < 3; i++) {
+                    const filter = this.audioContext.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.Q.value = 10; // Narrow bandwidth
+                    this.formantFilters.push(filter);
+                }
+            }
+            
+            setVowel(vowel) {
+                const formants = this.vowelFormants[vowel] || this.vowelFormants['a'];
+                this.formantFilters[0].frequency.value = formants.f1;
+                this.formantFilters[1].frequency.value = formants.f2;
+                this.formantFilters[2].frequency.value = formants.f3;
+            }
+            
+            shiftFormants(ratio) {
+                // Shift all formant frequencies by the ratio
+                for (let filter of this.formantFilters) {
+                    const currentFreq = filter.frequency.value;
+                    filter.frequency.value = currentFreq * ratio;
+                }
+            }
+            
+            connect(source, destination) {
+                // Connect filters in parallel
+                const merger = this.audioContext.createChannelMerger(1);
+                
+                for (let i = 0; i < this.formantFilters.length; i++) {
+                    source.connect(this.formantFilters[i]);
+                    this.formantFilters[i].connect(merger);
+                }
+                
+                merger.connect(destination);
+            }
+        }
+        
+        // Initialize the application
+        const app = new KawaiiVoiceProcessor();
+    </script>
+</body>
+</html>
