@@ -1,7 +1,6 @@
 """Tests for GUI widgets."""
 
 import pytest
-from PySide6.QtCore import QSignalSpy
 from PySide6.QtWidgets import QApplication
 
 from kawaii_voice_changer.gui.widgets import (
@@ -39,15 +38,12 @@ class TestParameterSlider:
         slider = ParameterSlider("Test", 0.0, 2.0, 1.0, 0.1)
         qtbot.addWidget(slider)
 
-        # Create signal spy
-        spy = QSignalSpy(slider.value_changed)
+        # Use qtbot to wait for signal
+        with qtbot.waitSignal(slider.value_changed) as blocker:
+            slider.set_value(1.5)
 
-        # Change value
-        slider.set_value(1.5)
-
-        # Check signal was emitted
-        assert len(spy) == 1
-        assert spy[0][0] == pytest.approx(1.5, 0.01)
+        # Check signal was emitted with correct value
+        assert blocker.args[0] == pytest.approx(1.5, 0.01)
 
     def test_value_clamping(self, qapp, qtbot):  # noqa: ARG002
         """Test value clamping to range."""
@@ -96,13 +92,11 @@ class TestPlaybackControls:
         controls = PlaybackControls()
         qtbot.addWidget(controls)
 
-        spy = QSignalSpy(controls.volume_changed)
+        # Use qtbot to wait for signal
+        with qtbot.waitSignal(controls.volume_changed) as blocker:
+            controls.volume_slider.setValue(50)
 
-        # Change volume to 50%
-        controls.volume_slider.setValue(50)
-
-        assert len(spy) == 1
-        assert spy[0][0] == pytest.approx(0.5)
+        assert blocker.args[0] == pytest.approx(0.5)
         assert controls.volume_label.text() == "50%"
 
     def test_position_display(self, qapp, qtbot):  # noqa: ARG002
