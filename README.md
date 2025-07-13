@@ -1,172 +1,146 @@
-# 可愛い声実験 - デスクトップ音声処理アプリケーション
+# Kawaii Voice Changer 🎤
 
-このプロジェクトは、論文「Finding Kawaii」（arXiv:2507.06235）の研究成果に基づき、音声の基本周波数（F0）とフォルマント周波数（F1-F3）を調整することで「可愛い声」のスイートスポットを探索できるデスクトップアプリケーションです。
+[![CI](https://github.com/ayutaz/kawaii-voice-changer/actions/workflows/ci.yml/badge.svg)](https://github.com/ayutaz/kawaii-voice-changer/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 
-## プロジェクト概要
+A desktop application to find the sweet spot of "kawaii" (cute) voice by adjusting fundamental frequency (F0) and formant frequencies (F1-F3). Based on the research paper "Finding Kawaii" (arXiv:2507.06235).
 
-高品質な音声処理を実現するため、Python + PyWorldによるデスクトップアプリケーションとして開発します。Web版と比較して、より精密な音声制御と研究レベルの品質を提供します。
+## 🌟 Features
 
-## ファイル構成
+- **Real-time Voice Processing**: Adjust voice parameters and hear changes instantly
+- **Independent Control**: Separate control of pitch (F0) and formants (F1-F3)
+- **Loop Playback**: Continuous playback for easy comparison
+- **Presets**: Built-in kawaii voice presets
+- **Cross-platform**: Works on Windows, macOS, and Linux
 
-### ドキュメント
+## 📋 Requirements
 
-#### 1. `requirements-specification.md`
-MVPソフトウェアの要件定義書：
-- 機能要件（F0/フォルマント制御、ループ再生、プリセット等）
-- 非機能要件（パフォーマンス、ユーザビリティ）
-- UI/UXデザイン仕様
-- 開発フェーズ計画
+- Python 3.12+
+- uv (for dependency management)
+- System dependencies:
+  - **Windows**: No additional requirements
+  - **macOS**: `brew install portaudio libsndfile`
+  - **Linux**: `sudo apt-get install libportaudio2 libsndfile1`
 
-#### 2. `technical-selection.md`
-技術選定と実装方針：
-- PyWorld + sounddevice + PySide6の選定理由
-- ハイブリッドアプローチによるリアルタイム処理実現
-- システムアーキテクチャ設計
-- パフォーマンス最適化戦略
+## 🚀 Quick Start
 
-#### 3. `kawaii-voice-research-report.md`
-論文調査と技術研究レポート：
-- 論文（arXiv:2507.06235）の要約と知見
-- 音声処理技術（WORLD、Phase Vocoder、PSOLA）の詳細
-- MVP開発への具体的な提案
-
-#### 4. `real-time-audio-processing-comparison.md`
-音声処理実装の技術比較：
-- 各種Python音声処理ライブラリの詳細比較
-- PyWorldの特徴と制限事項
-- GUI フレームワークの選定根拠
-
-### 実装ファイル
-
-#### 1. `kawaii_voice_core.py`
-音声処理のコアモジュール：
-- AudioProcessor: PyWorldによる音声分析・合成
-- AudioPlayer: sounddeviceによるループ再生
-- プリセット定義
-
-#### 2. `kawaii_voice_gui.py`（開発予定）
-PySide6によるGUIアプリケーション：
-- ファイルドラッグ&ドロップ
-- リアルタイムパラメータ調整スライダー
-- 波形・スペクトラム表示
-- プリセット管理
-
-#### 3. `kawaii_voice_app.py`（開発予定）
-メインアプリケーション統合
-
-## 主要概念
-
-### ピッチシフト
-- 声の基本周波数（F0）を変更
-- 声を高くまたは低くする
-- 比率 > 1.0 = 高いピッチ、< 1.0 = 低いピッチ
-
-### フォルマントシフト
-- 声道共鳴（フォルマント）を変更
-- ピッチに影響を与えずに声の特性を変更
-- 比率 > 1.0 = より若い/小さい声道、< 1.0 = より大きい声道
-
-### 可愛い声エフェクト
-通常以下を組み合わせます：
-- わずかなピッチ上昇（1.1-1.3倍）
-- フォルマントを上にシフト（1.2-1.5倍）
-- 可愛い声の特性を作りながら明瞭度を保持
-
-## 技術スタック
-
-### コア依存関係
-```
-pyworld-prebuilt  # 高品質音声処理（コンパイル不要版）
-sounddevice       # 低遅延音声I/O
-soundfile         # 音声ファイル読み書き
-numpy             # 数値計算
-scipy             # 信号処理
-PySide6           # GUI フレームワーク
-pyqtgraph         # リアルタイム波形表示
-```
-
-### 開発環境要件
-- Python 3.8以上
-- Windows 10/11, macOS 10.15+, Ubuntu 20.04+
-- 4GB以上のRAM推奨
-
-## インストール手順
+### Installation with uv
 
 ```bash
-# 仮想環境の作成
-python -m venv kawaii_voice_env
-source kawaii_voice_env/bin/activate  # Mac/Linux
-# kawaii_voice_env\Scripts\activate  # Windows
+# Clone the repository
+git clone https://github.com/ayutaz/kawaii-voice-changer.git
+cd kawaii-voice-changer
 
-# 依存関係のインストール
-pip install pyworld-prebuilt sounddevice soundfile
-pip install PySide6 pyqtgraph
-pip install numpy scipy
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# アプリケーションの実行
-python kawaii_voice_app.py
+# Install dependencies
+uv sync
+
+# Run the application
+uv run kawaii-voice-changer
 ```
 
-## パフォーマンスのヒント
+### Development Setup
 
-1. **バッファサイズ**: レイテンシと安定性のバランス
-   - 小さいバッファ = 低レイテンシだがCPU使用率が高い
-   - 典型的: 256-1024サンプル
-
-2. **サンプルレート**: 
-   - 音声用に最小16kHz
-   - より良い品質のために44.1kHz
-   - 高いレートはCPU使用率を増加
-
-3. **処理の最適化**:
-   - 2の累乗のFFTサイズを使用
-   - Web用のGPUアクセラレーションを検討
-   - 特定の使用ケースをプロファイル
-
-## アプリケーション使用方法
-
-1. **音声ファイルの読み込み**
-   - ファイルをウィンドウにドラッグ&ドロップ
-   - または「ファイルを開く」ボタンから選択
-
-2. **パラメータ調整**
-   - F0スライダー: 声の高さを調整（0.5〜2.0倍）
-   - F1-F3スライダー: 各フォルマントを個別調整
-   - 連動モード: すべてのフォルマントを一括調整
-
-3. **プリセット使用**
-   - ドロップダウンから選択して即座に適用
-   - カスタムプリセットの保存も可能
-
-4. **再生制御**
-   - 自動的にループ再生開始
-   - 再生/一時停止、音量調整が可能
-
-## 今後の拡張計画
-
-### 短期（実装予定）
-- 処理結果のエクスポート機能
-- A/B比較モード
-- より詳細なスペクトラム表示
-
-### 長期（検討中）
-- マイク入力のリアルタイム処理
-- AIによる「可愛さ」自動評価
-- VST/AUプラグイン化
-- バッチ処理機能
-
-## トラブルシューティング
-
-### PyWorldのインストールエラー
 ```bash
-# コンパイルエラーの場合
-pip install pyworld-prebuilt  # プリビルド版を使用
+# Install with development dependencies
+uv sync --all-extras
+
+# Run tests
+uv run pytest
+
+# Run linting
+uv run ruff check .
+uv run ruff format .
+
+# Type checking
+uv run mypy src
 ```
 
-### 音声が再生されない
-- サンプリングレートが16kHz以上か確認
-- sounddeviceのデバイス設定を確認
+## 🎮 Usage
 
-## ライセンス
+1. **Load Audio File**: Drag and drop an audio file or use the file dialog
+2. **Adjust Parameters**:
+   - **F0 (Pitch)**: Changes voice pitch (0.5x - 2.0x)
+   - **F1-F3 (Formants)**: Changes voice characteristics
+   - **Link Mode**: Adjust all formants together
+3. **Apply Presets**: Choose from built-in kawaii voice presets
+4. **Playback Control**: Auto-loops for easy comparison
 
-本プロジェクトは教育・研究目的で公開されています。各依存ライブラリのライセンスもご確認ください。
+## 🏗️ Project Structure
+
+```
+kawaii-voice-changer/
+├── src/
+│   └── kawaii_voice_changer/
+│       ├── core/          # Audio processing modules
+│       ├── gui/           # GUI components
+│       └── utils/         # Utilities
+├── tests/                 # Test files
+├── docs/                  # Documentation
+└── resources/            # Icons, assets
+```
+
+## 🔧 Building Executable
+
+```bash
+# Build standalone executable
+uv run pyinstaller --name=KawaiiVoiceChanger \
+                   --onefile \
+                   --windowed \
+                   --add-data "resources:resources" \
+                   src/kawaii_voice_changer/main.py
+```
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run with coverage
+uv run pytest --cov=src --cov-report=html
+
+# Run specific test
+uv run pytest tests/test_audio_processor.py
+```
+
+## 📚 Documentation
+
+- [Requirements Specification](docs/requirements-specification.md)
+- [Technical Selection](docs/technical-selection.md)
+- [Development Plan](docs/development-plan.md)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Pre-commit Hooks
+
+```bash
+# Install pre-commit hooks
+uv run pre-commit install
+
+# Run manually
+uv run pre-commit run --all-files
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Based on the research paper "Finding Kawaii: A Study of Kawaii Vocal Aesthetics in Modern Japanese Popular Music" (arXiv:2507.06235)
+- Uses [WORLD Vocoder](https://github.com/mmorise/World) for high-quality voice analysis and synthesis
+- Built with [PySide6](https://www.qt.io/qt-for-python) for cross-platform GUI
+
+## 📮 Contact
+
+- GitHub Issues: [Report bugs or request features](https://github.com/ayutaz/kawaii-voice-changer/issues)
