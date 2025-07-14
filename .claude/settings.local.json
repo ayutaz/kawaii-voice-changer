@@ -27,7 +27,8 @@
       "Bash(git fetch:*)",
       "Bash(git pull:*)",
       "Bash(git stash:*)",
-      "Bash(gh run watch:*)"
+      "Bash(gh run watch:*)",
+      "Bash(gh release list:*)"
     ],
     "deny": []
   }
