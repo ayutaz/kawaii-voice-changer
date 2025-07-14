@@ -6,6 +6,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 
+![](docs/kawaii-voice-changer.png)
+
 基本周波数（F0）とフォルマント周波数（F1-F3）を調整して「可愛い声」のスイートスポットを見つけるデスクトップアプリケーションです。論文「Finding Kawaii」（arXiv:2507.06235）の研究成果に基づいています。
 
 ## 📥 ダウンロード
