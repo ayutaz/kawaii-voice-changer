@@ -54,7 +54,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libportaudio2 libsndfile1
+        sudo apt-get install -y libportaudio2 libsndfile1 libegl1 libgl1
 
     - name: Install system dependencies (macOS)
       if: matrix.os == 'macos-latest'
@@ -134,17 +134,21 @@ jobs:
     - name: Test binary startup (macOS)
       if: matrix.os == 'macos-latest'
       run: |
+        # Install timeout command on macOS
+        brew install coreutils
+        
         # Test binary
         if [ -d "dist/KawaiiVoiceChanger.app" ]; then
-          timeout 10s ./dist/KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger --help || EXIT_CODE=$?
+          gtimeout 10s ./dist/KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger --help || EXIT_CODE=$?
         else
-          timeout 10s ./dist/${{ matrix.build_name }} --help || EXIT_CODE=$?
+          gtimeout 10s ./dist/${{ matrix.build_name }} --help || EXIT_CODE=$?
         fi
         
         if [ "$EXIT_CODE" != "124" ] && [ "$EXIT_CODE" != "0" ]; then
-          echo "Binary test failed"
+          echo "Binary test failed with exit code: $EXIT_CODE"
           exit 1
         fi
+        echo "Binary test passed"
       shell: bash
 
     - name: Upload build artifact
