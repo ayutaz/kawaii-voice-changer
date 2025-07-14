@@ -90,6 +90,65 @@ jobs:
         fi
       shell: bash
 
+    # Test binary before upload
+    - name: Test binary startup (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        # Extract for testing
+        cd dist
+        tar -tf ../${{ matrix.artifact_name }}${{ matrix.package_ext }} | head -5
+        cd ..
+        
+        # Set up virtual display
+        export DISPLAY=:99
+        sudo apt-get install -y xvfb
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        sleep 3
+        
+        # Test binary
+        timeout 10s ./dist/${{ matrix.build_name }} --help || EXIT_CODE=$?
+        if [ "$EXIT_CODE" != "124" ] && [ "$EXIT_CODE" != "0" ]; then
+          echo "Binary test failed"
+          exit 1
+        fi
+      shell: bash
+
+    - name: Test binary startup (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        # Test binary
+        Start-Process -FilePath "./dist/${{ matrix.build_name }}" -ArgumentList "--help" -Wait -NoNewWindow -PassThru -ErrorAction SilentlyContinue | Out-Null
+        
+        # Quick startup test
+        $process = Start-Process -FilePath "./dist/${{ matrix.build_name }}" -PassThru
+        Start-Sleep -Seconds 5
+        
+        if ($process.HasExited -and $process.ExitCode -ne 0) {
+          Write-Error "Binary test failed"
+          exit 1
+        }
+        
+        if (!$process.HasExited) {
+          Stop-Process -Id $process.Id -Force
+        }
+      shell: powershell
+
+    - name: Test binary startup (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        # Test binary
+        if [ -d "dist/KawaiiVoiceChanger.app" ]; then
+          timeout 10s ./dist/KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger --help || EXIT_CODE=$?
+        else
+          timeout 10s ./dist/${{ matrix.build_name }} --help || EXIT_CODE=$?
+        fi
+        
+        if [ "$EXIT_CODE" != "124" ] && [ "$EXIT_CODE" != "0" ]; then
+          echo "Binary test failed"
+          exit 1
+        fi
+      shell: bash
+
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
       with:

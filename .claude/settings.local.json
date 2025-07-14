@@ -22,7 +22,11 @@
       "Bash(uv run pytest:*)",
       "Bash(grep:*)",
       "Bash(uv run:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git tag -a v1.0.0 -m \"Release v1.0.0 - First official release of Kawaii Voice Changer\")",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)"
     ],
     "deny": []
   }

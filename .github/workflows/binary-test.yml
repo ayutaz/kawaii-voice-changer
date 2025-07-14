@@ -1,0 +1,213 @@
+name: Binary Smoke Test
+
+on:
+  workflow_run:
+    workflows: ["Release", "Nightly Build"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  test-binaries:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: Linux
+            artifact_name: KawaiiVoiceChanger-Linux
+            extract_cmd: tar -xzf
+            binary_path: ./KawaiiVoiceChanger
+            test_cmd: ./KawaiiVoiceChanger --version
+          - os: windows-latest
+            name: Windows
+            artifact_name: KawaiiVoiceChanger-Windows
+            extract_cmd: 7z x
+            binary_path: KawaiiVoiceChanger.exe
+            test_cmd: ./KawaiiVoiceChanger.exe --version
+          - os: macos-latest
+            name: macOS
+            artifact_name: KawaiiVoiceChanger-macOS
+            extract_cmd: unzip
+            binary_path: KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger
+            test_cmd: ./KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger --version
+
+    steps:
+    - name: Download release artifacts
+      if: github.event_name == 'workflow_dispatch'
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: ./
+
+    - name: Download artifacts from workflow run
+      if: github.event_name == 'workflow_run'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: ${{ github.event.workflow_run.id }},
+          });
+          
+          const matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+            return artifact.name == "${{ matrix.artifact_name }}"
+          })[0];
+          
+          const download = await github.rest.actions.downloadArtifact({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            artifact_id: matchArtifact.id,
+            archive_format: 'zip',
+          });
+          
+          const fs = require('fs');
+          fs.writeFileSync('${{ matrix.artifact_name }}.zip', Buffer.from(download.data));
+
+    - name: Extract workflow artifact
+      if: github.event_name == 'workflow_run'
+      run: |
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          7z x ${{ matrix.artifact_name }}.zip
+        else
+          unzip ${{ matrix.artifact_name }}.zip
+        fi
+      shell: bash
+
+    - name: List files
+      run: ls -la
+      shell: bash
+
+    - name: Extract binary package
+      run: |
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          7z x *.zip -o.
+        elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+          unzip *.zip
+        else
+          tar -xzf *.tar.gz
+        fi
+      shell: bash
+
+    - name: Install dependencies (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libportaudio2 libsndfile1 libegl1 libgl1 libxcb-xinerama0 libxcb-cursor0
+
+    - name: Install dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install portaudio libsndfile
+
+    - name: Make binary executable (Unix)
+      if: matrix.os != 'windows-latest'
+      run: |
+        if [ -f "${{ matrix.binary_path }}" ]; then
+          chmod +x ${{ matrix.binary_path }}
+        elif [ -d "KawaiiVoiceChanger.app" ]; then
+          chmod +x KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger
+        fi
+      shell: bash
+
+    - name: Test binary startup (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        # Set up virtual display for GUI testing
+        export DISPLAY=:99
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        sleep 3
+        
+        # Try to start the application and check if it runs
+        timeout 10s ${{ matrix.binary_path }} --help || EXIT_CODE=$?
+        
+        # Exit code 124 means timeout (expected for GUI app)
+        # Exit code 0 means --help worked
+        # Any other exit code is an error
+        if [ "$EXIT_CODE" != "124" ] && [ "$EXIT_CODE" != "0" ]; then
+          echo "Binary failed to start properly"
+          exit 1
+        fi
+      shell: bash
+
+    - name: Test binary startup (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        # Try to get version or help info
+        Start-Process -FilePath "${{ matrix.binary_path }}" -ArgumentList "--help" -Wait -NoNewWindow -PassThru | Out-Null
+        
+        # If that doesn't work, try starting with timeout
+        $process = Start-Process -FilePath "${{ matrix.binary_path }}" -PassThru
+        Start-Sleep -Seconds 5
+        
+        if ($process.HasExited -and $process.ExitCode -ne 0) {
+          Write-Error "Binary failed to start"
+          exit 1
+        }
+        
+        # Kill the process if it's still running
+        if (!$process.HasExited) {
+          Stop-Process -Id $process.Id -Force
+        }
+      shell: powershell
+
+    - name: Test binary startup (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        # Try to start the application
+        if [ -d "KawaiiVoiceChanger.app" ]; then
+          # Test the binary directly
+          timeout 10s ./KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger --help || EXIT_CODE=$?
+        else
+          timeout 10s ${{ matrix.binary_path }} --help || EXIT_CODE=$?
+        fi
+        
+        # Exit code 124 means timeout (expected for GUI app)
+        # Exit code 0 means --help worked
+        # Any other exit code is an error
+        if [ "$EXIT_CODE" != "124" ] && [ "$EXIT_CODE" != "0" ]; then
+          echo "Binary failed to start properly"
+          exit 1
+        fi
+      shell: bash
+
+    - name: Check binary info
+      run: |
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          echo "Binary information:"
+          dir ${{ matrix.binary_path }}
+        elif [ "${{ matrix.os }}" == "macos-latest" ] && [ -d "KawaiiVoiceChanger.app" ]; then
+          echo "App bundle contents:"
+          ls -la KawaiiVoiceChanger.app/Contents/
+          ls -la KawaiiVoiceChanger.app/Contents/MacOS/
+          echo "Binary information:"
+          file KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger
+        else
+          echo "Binary information:"
+          file ${{ matrix.binary_path }}
+          ldd ${{ matrix.binary_path }} || true
+        fi
+      shell: bash
+
+  notify-success:
+    needs: test-binaries
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+    - name: Notify success
+      run: |
+        echo "✅ All binary smoke tests passed successfully!"
+        echo "Binaries are ready for distribution."
+
+  notify-failure:
+    needs: test-binaries
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+    - name: Notify failure
+      run: |
+        echo "❌ One or more binary smoke tests failed!"
+        echo "Please check the logs for details."
+        exit 1
