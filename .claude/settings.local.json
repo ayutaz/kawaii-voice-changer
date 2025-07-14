@@ -21,7 +21,8 @@
       "Bash(uv run ruff format:*)",
       "Bash(uv run pytest:*)",
       "Bash(grep:*)",
-      "Bash(uv run:*)"
+      "Bash(uv run:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }

@@ -1,6 +1,6 @@
 [project]
 name = "kawaii-voice-changer"
-version = "0.1.0"
+version = "1.0.0"
 description = "A desktop application to find the sweet spot of kawaii voice by adjusting fundamental frequency and formant frequencies"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -10,7 +10,7 @@ authors = [
 ]
 keywords = ["audio", "voice", "pyworld", "signal-processing", "kawaii"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",

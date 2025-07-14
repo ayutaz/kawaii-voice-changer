@@ -185,3 +185,38 @@ presets_custom.json
 logs/
 temp/
 cache/
+
+# Coverage reports
+.coverage
+coverage.xml
+htmlcov/
+
+# Testing
+.pytest_cache/
+.tox/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE specific
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Python virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# uv
+.python-version
