@@ -1,6 +1,9 @@
 name: Nightly Build
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     # Run at 2 AM UTC every day
     - cron: '0 2 * * *'
@@ -16,20 +19,26 @@ jobs:
       with:
         fetch-depth: 0
     
-    - name: Check for recent changes
+    - name: Check for recent changes or push event
       id: check
       run: |
-        # Check if there were commits in the last 24 hours
-        LAST_COMMIT=$(git log -1 --format=%ct)
-        CURRENT_TIME=$(date +%s)
-        DIFF=$((CURRENT_TIME - LAST_COMMIT))
-        
-        if [ $DIFF -lt 86400 ]; then
+        # Always build on push events
+        if [ "${{ github.event_name }}" == "push" ]; then
           echo "should_build=true" >> $GITHUB_OUTPUT
-          echo "Recent changes detected, proceeding with build"
+          echo "Push event detected, proceeding with build"
         else
-          echo "should_build=false" >> $GITHUB_OUTPUT
-          echo "No recent changes, skipping build"
+          # Check if there were commits in the last 24 hours for scheduled runs
+          LAST_COMMIT=$(git log -1 --format=%ct)
+          CURRENT_TIME=$(date +%s)
+          DIFF=$((CURRENT_TIME - LAST_COMMIT))
+          
+          if [ $DIFF -lt 86400 ]; then
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "Recent changes detected, proceeding with build"
+          else
+            echo "should_build=false" >> $GITHUB_OUTPUT
+            echo "No recent changes, skipping build"
+          fi
         fi
 
   nightly-build:
@@ -120,16 +129,19 @@ jobs:
       run: |
         # Set up virtual display
         export DISPLAY=:99
-        sudo apt-get install -y xvfb
+        sudo apt-get install -y xvfb libegl1 libgl1 libxcb-xinerama0 libxcb-cursor0
         Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
         sleep 3
         
         # Test binary
-        timeout 10s ./dist/${{ matrix.build_name }} --help || EXIT_CODE=$?
+        cd dist
+        chmod +x ${{ matrix.build_name }}
+        timeout 10s ./${{ matrix.build_name }} --help || EXIT_CODE=$?
         if [ "$EXIT_CODE" != "124" ] && [ "$EXIT_CODE" != "0" ]; then
-          echo "Binary test failed"
+          echo "Binary test failed with exit code: $EXIT_CODE"
           exit 1
         fi
+        echo "Binary test passed"
       shell: bash
 
     - name: Test binary startup (Windows)

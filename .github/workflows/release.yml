@@ -94,23 +94,21 @@ jobs:
     - name: Test binary startup (Linux)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        # Extract for testing
-        cd dist
-        tar -tf ../${{ matrix.artifact_name }}${{ matrix.package_ext }} | head -5
-        cd ..
-        
         # Set up virtual display
         export DISPLAY=:99
-        sudo apt-get install -y xvfb
+        sudo apt-get install -y xvfb libegl1 libgl1 libxcb-xinerama0 libxcb-cursor0
         Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
         sleep 3
         
         # Test binary
-        timeout 10s ./dist/${{ matrix.build_name }} --help || EXIT_CODE=$?
+        cd dist
+        chmod +x ${{ matrix.build_name }}
+        timeout 10s ./${{ matrix.build_name }} --help || EXIT_CODE=$?
         if [ "$EXIT_CODE" != "124" ] && [ "$EXIT_CODE" != "0" ]; then
-          echo "Binary test failed"
+          echo "Binary test failed with exit code: $EXIT_CODE"
           exit 1
         fi
+        echo "Binary test passed"
       shell: bash
 
     - name: Test binary startup (Windows)
