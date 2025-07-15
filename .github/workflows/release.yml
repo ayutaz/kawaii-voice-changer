@@ -94,15 +94,30 @@ jobs:
     - name: Test binary startup (Linux)
       if: matrix.os == 'ubuntu-latest'
       run: |
+        # Install additional Qt dependencies
+        sudo apt-get install -y xvfb libegl1 libgl1 libxcb-xinerama0 libxcb-cursor0 \
+          libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+          libxcb-shape0 libxcb-sync1 libxcb-xfixes0 libxcb-xkb1 libxkbcommon-x11-0 \
+          libdbus-1-3 libfontconfig1 libfreetype6
+        
         # Set up virtual display
         export DISPLAY=:99
-        sudo apt-get install -y xvfb libegl1 libgl1 libxcb-xinerama0 libxcb-cursor0
         Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
         sleep 3
+        
+        # Enable Qt debugging
+        export QT_DEBUG_PLUGINS=1
+        export QT_QPA_PLATFORM=xcb
         
         # Test binary
         cd dist
         chmod +x ${{ matrix.build_name }}
+        
+        # First check if binary can be executed and get library dependencies
+        echo "Checking binary dependencies:"
+        ldd ./${{ matrix.build_name }} || true
+        
+        # Test with timeout
         timeout 10s ./${{ matrix.build_name }} --help || EXIT_CODE=$?
         if [ "$EXIT_CODE" != "124" ] && [ "$EXIT_CODE" != "0" ]; then
           echo "Binary test failed with exit code: $EXIT_CODE"
