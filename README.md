@@ -150,7 +150,8 @@ make pre-commit
 
 ## 🙏 謝辞
 
-- 論文「Finding Kawaii: A Study of Kawaii Vocal Aesthetics in Modern Japanese Popular Music」（arXiv:2507.06235）に基づいています
+- 論文「Super Kawaii Vocalics:
+Amplifying the “Cute” Factor in Computer Voice」（https://arxiv.org/pdf/2507.06235）に基づいています
 - 高品質な音声分析・合成には[WORLD Vocoder](https://github.com/mmorise/World)を使用
 - クロスプラットフォームGUIには[PySide6](https://www.qt.io/qt-for-python)を使用
 
