@@ -8,7 +8,8 @@
 
 ![](docs/kawaii-voice-changer.png)
 
-基本周波数（F0）とフォルマント周波数（F1-F3）を調整して「可愛い声」のスイートスポットを見つけるデスクトップアプリケーションです。論文「Finding Kawaii」（arXiv:2507.06235）の研究成果に基づいています。
+基本周波数（F0）とフォルマント周波数（F1-F3）を調整して「可愛い声」のスイートスポットを見つけるデスクトップアプリケーションです。論文「[Super Kawaii Vocalics:
+Amplifying the “Cute” Factor in Computer Voice](https://arxiv.org/pdf/2507.06235)」（arXiv:2507.06235）を元にしています。
 
 ## 📥 ダウンロード
 
