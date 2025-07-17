@@ -3,7 +3,7 @@
 ## 1. プロジェクト概要
 
 ### 1.1 背景
-論文「Finding Kawaii: A Study of Kawaii Vocal Aesthetics in Modern Japanese Popular Music」（arXiv:2507.06235）の研究成果に基づき、音声の基本周波数（F0）とフォルマント周波数（F1-F3）を調整することで「可愛い声」のスイートスポットを探索できるソフトウェアを開発する。
+論文「Super Kawaii Vocalics: Amplifying the "Cute" Factor in Computer Voice」（arXiv:2507.06235）の研究成果に基づき、音声の基本周波数（F0）とフォルマント周波数（F1-F3）を調整することで「可愛い声」のスイートスポットを探索できるソフトウェアを開発する。
 
 ### 1.2 目的
 - 音声ファイルの基本周波数とフォルマント周波数をリアルタイムで調整

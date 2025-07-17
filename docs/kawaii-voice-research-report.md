@@ -1,7 +1,7 @@
 # 可愛い声の再現実験ソフトウェア開発に関する調査レポート
 
 ## 概要
-本レポートは、論文「Finding Kawaii: A Study of Kawaii Vocal Aesthetics in Modern Japanese Popular Music」（arXiv:2507.06235）の実験を再現するためのソフトウェア開発に向けた技術調査結果をまとめたものです。
+本レポートは、論文「Super Kawaii Vocalics: Amplifying the "Cute" Factor in Computer Voice」（arXiv:2507.06235）の実験を再現するためのソフトウェア開発に向けた技術調査結果をまとめたものです。
 
 ## 論文の概要
 - **研究内容**: 音声の基本周波数（F0）とフォルマント周波数を操作することで「可愛い声」のスイートスポットを見つける研究

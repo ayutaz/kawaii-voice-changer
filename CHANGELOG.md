@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🎉 初回リリース
 
-Kawaii Voice Changerの最初の公式リリースです。論文「Finding Kawaii」（arXiv:2507.06235）の研究成果に基づいた、声を「可愛く」変換するデスクトップアプリケーションです。
+Kawaii Voice Changerの最初の公式リリースです。論文「Super Kawaii Vocalics: Amplifying the "Cute" Factor in Computer Voice」（arXiv:2507.06235）の研究成果に基づいた、声を「可愛く」変換するデスクトップアプリケーションです。
 
 ### ✨ 主な機能
 
@@ -92,7 +92,7 @@ Kawaii Voice Changerの最初の公式リリースです。論文「Finding Kawa
 
 ### 🙏 謝辞
 
-- 論文「Finding Kawaii」の著者の皆様
+- 論文「Super Kawaii Vocalics: Amplifying the "Cute" Factor in Computer Voice」の著者の皆様
 - WORLD Vocoderの開発者 森勢将雅様
 - オープンソースコミュニティの皆様
 
