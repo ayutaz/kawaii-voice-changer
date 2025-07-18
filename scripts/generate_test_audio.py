@@ -86,7 +86,7 @@ def generate_voice_like_sound(
     return filtered
 
 
-def main():
+def main() -> None:
     """Generate test audio files."""
     # Create output directory
     output_dir = Path("test_audio")
