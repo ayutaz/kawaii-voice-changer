@@ -157,7 +157,7 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         cd dist
-        7z a -tzip ../KawaiiVoiceChanger-${{ matrix.name }}.zip KawaiiVoiceChanger.exe
+        7z a -tzip ../KawaiiVoiceChanger-${{ matrix.name }}.zip KawaiiVoiceChanger/
       shell: bash
     
     - name: Create distribution package (macOS)
@@ -166,15 +166,19 @@ jobs:
         cd dist
         if [ -d "KawaiiVoiceChanger.app" ]; then
           zip -r ../KawaiiVoiceChanger-${{ matrix.name }}.zip KawaiiVoiceChanger.app
+        elif [ -d "KawaiiVoiceChanger" ]; then
+          zip -r ../KawaiiVoiceChanger-${{ matrix.name }}.zip KawaiiVoiceChanger/
         else
-          zip ../KawaiiVoiceChanger-${{ matrix.name }}.zip KawaiiVoiceChanger
+          echo "Error: Neither KawaiiVoiceChanger.app nor KawaiiVoiceChanger directory found"
+          ls -la
+          exit 1
         fi
     
     - name: Create distribution package (Linux)
       if: matrix.os == 'ubuntu-latest'
       run: |
         cd dist
-        tar -czf ../KawaiiVoiceChanger-${{ matrix.name }}.tar.gz KawaiiVoiceChanger
+        tar -czf ../KawaiiVoiceChanger-${{ matrix.name }}.tar.gz KawaiiVoiceChanger/
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v4

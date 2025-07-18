@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Kawaii Voice Changer
+Comment=Find the sweet spot of kawaii voice by adjusting F0 and formant frequencies
+Exec=KawaiiVoiceChanger %f
+Icon=kawaii-voice-changer
+Terminal=false
+Categories=AudioVideo;Audio;AudioVideoEditing;
+MimeType=audio/wav;audio/x-wav;audio/mpeg;audio/mp3;audio/ogg;audio/flac;
+Keywords=voice;audio;kawaii;pitch;formant;
+StartupNotify=true
+StartupWMClass=KawaiiVoiceChanger

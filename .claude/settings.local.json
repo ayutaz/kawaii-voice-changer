@@ -34,7 +34,8 @@
       "Bash(gh issue view:*)",
       "Bash(git checkout:*)",
       "Bash(pip install:*)",
-      "Bash(pyenv global:*)"
+      "Bash(pyenv global:*)",
+      "Bash(git merge:*)"
     ],
     "deny": []
   }

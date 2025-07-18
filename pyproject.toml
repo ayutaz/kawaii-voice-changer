@@ -27,7 +27,6 @@ dependencies = [
     "scipy>=1.10.1",
     "PySide6>=6.6.1",
     "pyqtgraph>=0.13.3",
-    "matplotlib>=3.7.2",
 ]
 
 [project.optional-dependencies]

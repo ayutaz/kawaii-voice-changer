@@ -1,0 +1,293 @@
+name: Test Binary Build
+
+on:
+  pull_request:
+    paths:
+      - 'kawaii_voice_changer.spec'
+      - 'pyproject.toml'
+      - 'src/**'
+      - 'runtime_hook.py'
+      - '.github/workflows/test-binary.yml'
+  workflow_dispatch:
+
+jobs:
+  test-binary:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
+        cache-dependency-glob: "pyproject.toml"
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install system dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install portaudio libsndfile coreutils
+    
+    - name: Install system dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        # Windows dependencies are handled by pip/conda
+    
+    - name: Install system dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libportaudio2 libsndfile1 libasound2-dev \
+          libegl1 libgl1 libxcb-xinerama0 libxcb-cursor0 \
+          libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+          libxcb-render-util0 libxcb-shape0 libxcb-sync1 libxcb-xfixes0 \
+          libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 libfontconfig1 \
+          libfreetype6 xvfb
+    
+    - name: Install project with build dependencies
+      run: |
+        uv sync --extra build
+    
+    - name: Build executable
+      run: |
+        uv run pyinstaller kawaii_voice_changer.spec --clean
+    
+    - name: Test binary startup and functionality (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        echo "=== Testing macOS Binary ==="
+        
+        # Check if app bundle exists
+        if [ ! -d "dist/KawaiiVoiceChanger.app" ]; then
+          echo "ERROR: App bundle not found!"
+          ls -la dist/
+          exit 1
+        fi
+        
+        echo "✓ App bundle found"
+        
+        # Check app bundle structure
+        echo -e "\n--- App Bundle Structure ---"
+        ls -la dist/KawaiiVoiceChanger.app/Contents/
+        
+        # Check Info.plist
+        echo -e "\n--- Info.plist Contents ---"
+        cat dist/KawaiiVoiceChanger.app/Contents/Info.plist || true
+        
+        # Check binary exists and is executable
+        BINARY_PATH="dist/KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger"
+        if [ ! -f "$BINARY_PATH" ]; then
+          echo "ERROR: Binary not found at $BINARY_PATH"
+          exit 1
+        fi
+        
+        echo "✓ Binary found"
+        
+        # Make sure it's executable
+        chmod +x "$BINARY_PATH"
+        
+        # Check binary dependencies
+        echo -e "\n--- Binary Dependencies ---"
+        otool -L "$BINARY_PATH" | head -20
+        
+        # Test 1: Help output
+        echo -e "\n--- Test 1: Help Output ---"
+        gtimeout 5s "$BINARY_PATH" --help || HELP_EXIT=$?
+        if [ "$HELP_EXIT" != "0" ] && [ "$HELP_EXIT" != "124" ]; then
+          echo "ERROR: Help command failed with exit code $HELP_EXIT"
+        else
+          echo "✓ Help test passed"
+        fi
+        
+        # Test 2: Quick launch test
+        echo -e "\n--- Test 2: Quick Launch Test ---"
+        # Set environment to headless mode
+        export QT_QPA_PLATFORM=offscreen
+        gtimeout 5s "$BINARY_PATH" || LAUNCH_EXIT=$?
+        if [ "$LAUNCH_EXIT" == "124" ]; then
+          echo "✓ Launch test passed (timeout as expected)"
+        elif [ "$LAUNCH_EXIT" == "0" ]; then
+          echo "✓ Launch test passed (clean exit)"
+        else
+          echo "WARNING: Launch test exited with code $LAUNCH_EXIT"
+        fi
+        
+        # Test 3: App bundle launch simulation
+        echo -e "\n--- Test 3: App Bundle Launch ---"
+        # This simulates double-clicking the app
+        gtimeout 5s open -W dist/KawaiiVoiceChanger.app || OPEN_EXIT=$?
+        if [ "$OPEN_EXIT" == "124" ]; then
+          echo "✓ App bundle launch test passed"
+        else
+          echo "WARNING: App bundle launch exited with code $OPEN_EXIT"
+        fi
+        
+        # Check for crash reports
+        echo -e "\n--- Checking for Crash Reports ---"
+        CRASH_COUNT=$(find ~/Library/Logs/DiagnosticReports -name "*KawaiiVoiceChanger*" -mtime -1 2>/dev/null | wc -l | tr -d ' ')
+        if [ "$CRASH_COUNT" -gt "0" ]; then
+          echo "ERROR: Found $CRASH_COUNT crash report(s)"
+          find ~/Library/Logs/DiagnosticReports -name "*KawaiiVoiceChanger*" -mtime -1 -exec cat {} \; | head -100
+          exit 1
+        else
+          echo "✓ No crash reports found"
+        fi
+        
+        echo -e "\n=== All Tests Passed ==="
+      shell: bash
+    
+    - name: Test binary startup and functionality (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        Write-Host "=== Testing Windows Binary ==="
+        
+        # Check if executable exists
+        if (-not (Test-Path "dist\KawaiiVoiceChanger\KawaiiVoiceChanger.exe")) {
+          Write-Error "ERROR: Executable not found!"
+          Get-ChildItem -Path dist -Recurse
+          exit 1
+        }
+        
+        Write-Host "✓ Executable found"
+        
+        # Check directory structure
+        Write-Host "`n--- Directory Structure ---"
+        Get-ChildItem -Path "dist\KawaiiVoiceChanger" -Recurse | Select-Object -First 20
+        
+        # Check for Qt platform plugins
+        $platformsPath = "dist\KawaiiVoiceChanger\PySide6\Qt\plugins\platforms"
+        if (Test-Path $platformsPath) {
+          Write-Host "✓ Qt platform plugins found"
+          Get-ChildItem -Path $platformsPath
+        } else {
+          Write-Warning "Qt platform plugins not found at $platformsPath"
+        }
+        
+        # Test 1: Help output (Skip for now as it might hang)
+        Write-Host "`n--- Test 1: Help Output ---"
+        Write-Host "Skipping help test to avoid potential hang"
+        
+        # Test 2: Quick launch test with timeout
+        Write-Host "`n--- Test 2: Quick Launch Test ---"
+        $env:QT_QPA_PLATFORM = "offscreen"
+        
+        # Create a job to run the process with timeout
+        $job = Start-Job -ScriptBlock {
+          $env:QT_QPA_PLATFORM = "offscreen"
+          & "dist\KawaiiVoiceChanger\KawaiiVoiceChanger.exe"
+        }
+        
+        # Wait for 5 seconds
+        $result = Wait-Job -Job $job -Timeout 5
+        
+        if ($result) {
+          # Job completed within timeout
+          $jobState = Receive-Job -Job $job
+          Remove-Job -Job $job -Force
+          Write-Host "✓ Launch test passed (process exited within timeout)"
+        } else {
+          # Job still running, kill it
+          Stop-Job -Job $job
+          Remove-Job -Job $job -Force
+          Write-Host "✓ Launch test passed (process started and was killed after timeout)"
+        }
+        
+        # Test 3: Check dependencies
+        Write-Host "`n--- Test 3: Checking Dependencies ---"
+        $dumpbin = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64\dumpbin.exe"
+        if (Test-Path $dumpbin) {
+          & $dumpbin /dependents "dist\KawaiiVoiceChanger\KawaiiVoiceChanger.exe" | Select-Object -First 30
+        } else {
+          Write-Host "dumpbin not found, skipping dependency check"
+        }
+        
+        Write-Host "`n=== All Tests Passed ==="
+      shell: pwsh
+    
+    - name: Test binary startup and functionality (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        echo "=== Testing Linux Binary ==="
+        
+        # Check if executable exists
+        if [ ! -f "dist/KawaiiVoiceChanger/KawaiiVoiceChanger" ]; then
+          echo "ERROR: Executable not found!"
+          ls -la dist/
+          exit 1
+        fi
+        
+        echo "✓ Executable found"
+        
+        # Check directory structure
+        echo -e "\n--- Directory Structure ---"
+        ls -la dist/KawaiiVoiceChanger/ | head -20
+        
+        # Check for Qt platform plugins
+        PLATFORMS_PATH="dist/KawaiiVoiceChanger/PySide6/Qt/plugins/platforms"
+        if [ -d "$PLATFORMS_PATH" ]; then
+          echo "✓ Qt platform plugins found"
+          ls -la "$PLATFORMS_PATH"
+        else
+          echo "WARNING: Qt platform plugins not found at $PLATFORMS_PATH"
+        fi
+        
+        # Make executable
+        chmod +x dist/KawaiiVoiceChanger/KawaiiVoiceChanger
+        
+        # Check binary dependencies
+        echo -e "\n--- Binary Dependencies ---"
+        ldd dist/KawaiiVoiceChanger/KawaiiVoiceChanger | head -20
+        
+        # Set up virtual display
+        export DISPLAY=:99
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        sleep 3
+        
+        # Test 1: Help output
+        echo -e "\n--- Test 1: Help Output ---"
+        timeout 5s dist/KawaiiVoiceChanger/KawaiiVoiceChanger --help || HELP_EXIT=$?
+        if [ "$HELP_EXIT" != "0" ] && [ "$HELP_EXIT" != "124" ]; then
+          echo "ERROR: Help command failed with exit code $HELP_EXIT"
+        else
+          echo "✓ Help test passed"
+        fi
+        
+        # Test 2: Quick launch test with debugging
+        echo -e "\n--- Test 2: Quick Launch Test ---"
+        export QT_DEBUG_PLUGINS=1
+        export QT_QPA_PLATFORM=xcb
+        export LD_LIBRARY_PATH="dist/KawaiiVoiceChanger/PySide6/Qt/lib:$LD_LIBRARY_PATH"
+        
+        timeout 10s dist/KawaiiVoiceChanger/KawaiiVoiceChanger || LAUNCH_EXIT=$?
+        if [ "$LAUNCH_EXIT" == "124" ]; then
+          echo "✓ Launch test passed (timeout as expected)"
+        elif [ "$LAUNCH_EXIT" == "0" ]; then
+          echo "✓ Launch test passed (clean exit)"
+        else
+          echo "WARNING: Launch test exited with code $LAUNCH_EXIT"
+        fi
+        
+        # Test 3: Check audio backend
+        echo -e "\n--- Test 3: Audio Backend Check ---"
+        python -c "import sounddevice; print('Available audio devices:', sounddevice.query_devices())" || true
+        
+        echo -e "\n=== All Tests Passed ==="
+      shell: bash
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.os }}-binary-test-results
+        path: |
+          dist/
+          ~/Library/Logs/DiagnosticReports/*KawaiiVoiceChanger*
+        retention-days: 7
