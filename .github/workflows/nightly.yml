@@ -106,8 +106,25 @@ jobs:
         echo "Files in current directory:"
         ls -la
         
-        # Build with explicit path
-        uv run pyinstaller ./kawaii_voice_changer.spec --clean
+        # Check if spec file exists
+        if [ -f "kawaii_voice_changer.spec" ]; then
+          echo "spec file found"
+        else
+          echo "ERROR: spec file not found!"
+          exit 1
+        fi
+        
+        # Show Python and PyInstaller version
+        uv run python --version
+        uv run pyinstaller --version
+        
+        # Build with explicit path and verbose output
+        echo "Starting PyInstaller build..."
+        uv run pyinstaller ./kawaii_voice_changer.spec --clean || {
+          echo "Build failed! Exit code: $?"
+          echo "=== Last 200 lines of output ==="
+          exit 1
+        }
     
     - name: Create nightly package (Windows)
       if: matrix.os == 'windows-latest'
