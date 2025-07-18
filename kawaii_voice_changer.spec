@@ -42,10 +42,17 @@ a = Analysis(
         'scipy.optimize',
         'scipy.interpolate',
         'scipy.linalg',
+        'scipy.sparse',
+        'scipy.special',
+        'scipy._lib',
+        'scipy._lib.messagestream',
         'numpy',
         'PySide6.QtCore',
         'PySide6.QtGui',
         'PySide6.QtWidgets',
+        'PySide6.QtMultimedia',
+        'PySide6.QtOpenGL',
+        'PySide6.QtOpenGLWidgets',
         'pyqtgraph',
         'sounddevice',
         'soundfile',
@@ -67,10 +74,8 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
     [],
+    exclude_binaries=True,  # Changed for onedir mode
     name='KawaiiVoiceChanger',
     debug=False,
     bootloader_ignore_signals=False,
@@ -87,15 +92,27 @@ exe = EXE(
     icon=None,  # Add icon path here if available
 )
 
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='KawaiiVoiceChanger',
+)
+
 # For macOS, create an app bundle
 if sys.platform == 'darwin':
     app = BUNDLE(
-        exe,
+        coll,
         name='KawaiiVoiceChanger.app',
         icon=None,  # Add icon path here if available
         bundle_identifier='com.ayutaz.kawaiivoicechanger',
         info_plist={
             'NSHighResolutionCapable': 'True',
             'LSBackgroundOnly': 'False',
+            'NSMicrophoneUsageDescription': 'This app requires microphone access for voice processing.',
         },
     )
