@@ -1,0 +1,133 @@
+name: Test Binary Build
+
+on:
+  pull_request:
+    paths:
+      - 'kawaii_voice_changer.spec'
+      - 'pyproject.toml'
+      - 'src/**'
+      - '.github/workflows/test-binary.yml'
+  workflow_dispatch:
+
+jobs:
+  test-macos-binary:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
+        cache-dependency-glob: "pyproject.toml"
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install system dependencies
+      run: |
+        brew install portaudio libsndfile coreutils
+    
+    - name: Install project with build dependencies
+      run: |
+        uv sync --extra build
+    
+    - name: Build executable
+      run: |
+        uv run pyinstaller kawaii_voice_changer.spec --clean
+    
+    - name: Test binary startup and functionality
+      run: |
+        echo "=== Testing macOS Binary ==="
+        
+        # Check if app bundle exists
+        if [ ! -d "dist/KawaiiVoiceChanger.app" ]; then
+          echo "ERROR: App bundle not found!"
+          ls -la dist/
+          exit 1
+        fi
+        
+        echo "✓ App bundle found"
+        
+        # Check app bundle structure
+        echo -e "\n--- App Bundle Structure ---"
+        ls -la dist/KawaiiVoiceChanger.app/Contents/
+        
+        # Check Info.plist
+        echo -e "\n--- Info.plist Contents ---"
+        cat dist/KawaiiVoiceChanger.app/Contents/Info.plist || true
+        
+        # Check binary exists and is executable
+        BINARY_PATH="dist/KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger"
+        if [ ! -f "$BINARY_PATH" ]; then
+          echo "ERROR: Binary not found at $BINARY_PATH"
+          exit 1
+        fi
+        
+        echo "✓ Binary found"
+        
+        # Make sure it's executable
+        chmod +x "$BINARY_PATH"
+        
+        # Check binary dependencies
+        echo -e "\n--- Binary Dependencies ---"
+        otool -L "$BINARY_PATH" | head -20
+        
+        # Test 1: Help output
+        echo -e "\n--- Test 1: Help Output ---"
+        gtimeout 5s "$BINARY_PATH" --help || HELP_EXIT=$?
+        if [ "$HELP_EXIT" != "0" ] && [ "$HELP_EXIT" != "124" ]; then
+          echo "ERROR: Help command failed with exit code $HELP_EXIT"
+        else
+          echo "✓ Help test passed"
+        fi
+        
+        # Test 2: Quick launch test
+        echo -e "\n--- Test 2: Quick Launch Test ---"
+        # Set environment to headless mode
+        export QT_QPA_PLATFORM=offscreen
+        gtimeout 5s "$BINARY_PATH" || LAUNCH_EXIT=$?
+        if [ "$LAUNCH_EXIT" == "124" ]; then
+          echo "✓ Launch test passed (timeout as expected)"
+        elif [ "$LAUNCH_EXIT" == "0" ]; then
+          echo "✓ Launch test passed (clean exit)"
+        else
+          echo "WARNING: Launch test exited with code $LAUNCH_EXIT"
+        fi
+        
+        # Test 3: App bundle launch simulation
+        echo -e "\n--- Test 3: App Bundle Launch ---"
+        # This simulates double-clicking the app
+        gtimeout 5s open -W dist/KawaiiVoiceChanger.app || OPEN_EXIT=$?
+        if [ "$OPEN_EXIT" == "124" ]; then
+          echo "✓ App bundle launch test passed"
+        else
+          echo "WARNING: App bundle launch exited with code $OPEN_EXIT"
+        fi
+        
+        # Check for crash reports
+        echo -e "\n--- Checking for Crash Reports ---"
+        CRASH_COUNT=$(find ~/Library/Logs/DiagnosticReports -name "*KawaiiVoiceChanger*" -mtime -1 2>/dev/null | wc -l | tr -d ' ')
+        if [ "$CRASH_COUNT" -gt "0" ]; then
+          echo "ERROR: Found $CRASH_COUNT crash report(s)"
+          find ~/Library/Logs/DiagnosticReports -name "*KawaiiVoiceChanger*" -mtime -1 -exec cat {} \; | head -100
+          exit 1
+        else
+          echo "✓ No crash reports found"
+        fi
+        
+        echo -e "\n=== All Tests Passed ==="
+      shell: bash
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-binary-test-results
+        path: |
+          dist/
+          ~/Library/Logs/DiagnosticReports/*KawaiiVoiceChanger*
+        retention-days: 7

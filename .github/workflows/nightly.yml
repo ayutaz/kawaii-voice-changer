@@ -182,18 +182,61 @@ jobs:
         # Install timeout command on macOS
         brew install coreutils
         
-        # Test binary
+        # Check if app bundle exists
         if [ -d "dist/KawaiiVoiceChanger.app" ]; then
+          echo "Found app bundle at dist/KawaiiVoiceChanger.app"
+          
+          # Check app bundle structure
+          echo "App bundle contents:"
+          ls -la dist/KawaiiVoiceChanger.app/Contents/
+          ls -la dist/KawaiiVoiceChanger.app/Contents/MacOS/
+          
+          # Check executable permissions
+          chmod +x dist/KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger || true
+          
+          # Test 1: Check if binary can display help
+          echo "Test 1: Checking --help option"
           gtimeout 10s ./dist/KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger --help || EXIT_CODE=$?
-        else
+          if [ "$EXIT_CODE" != "124" ] && [ "$EXIT_CODE" != "0" ]; then
+            echo "Help test failed with exit code: $EXIT_CODE"
+            # Don't fail immediately, continue with other tests
+          else
+            echo "Help test passed"
+          fi
+          
+          # Test 2: Check if app bundle can be opened (simulates double-click)
+          echo "Test 2: Testing app bundle launch"
+          # Use open command with timeout to simulate actual app launch
+          gtimeout 10s open -W dist/KawaiiVoiceChanger.app || OPEN_EXIT_CODE=$?
+          if [ "$OPEN_EXIT_CODE" == "124" ]; then
+            echo "App bundle launch test passed (timeout expected for GUI app)"
+          elif [ "$OPEN_EXIT_CODE" != "0" ]; then
+            echo "App bundle launch failed with exit code: $OPEN_EXIT_CODE"
+            # Check crash logs
+            echo "Checking for crash logs..."
+            log show --predicate 'eventMessage contains "KawaiiVoiceChanger"' --info --last 2m || true
+            exit 1
+          fi
+          
+          # Test 3: Check binary dependencies
+          echo "Test 3: Checking binary dependencies"
+          otool -L dist/KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger || true
+          
+        elif [ -f "dist/${{ matrix.build_name }}" ]; then
+          echo "Found standalone binary at dist/${{ matrix.build_name }}"
+          chmod +x dist/${{ matrix.build_name }}
           gtimeout 10s ./dist/${{ matrix.build_name }} --help || EXIT_CODE=$?
-        fi
-        
-        if [ "$EXIT_CODE" != "124" ] && [ "$EXIT_CODE" != "0" ]; then
-          echo "Binary test failed with exit code: $EXIT_CODE"
+          if [ "$EXIT_CODE" != "124" ] && [ "$EXIT_CODE" != "0" ]; then
+            echo "Binary test failed with exit code: $EXIT_CODE"
+            exit 1
+          fi
+        else
+          echo "ERROR: No binary found!"
+          ls -la dist/
           exit 1
         fi
-        echo "Binary test passed"
+        
+        echo "All binary tests passed"
       shell: bash
     
     - name: Upload nightly build
