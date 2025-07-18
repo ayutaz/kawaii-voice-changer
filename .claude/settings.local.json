@@ -28,7 +28,13 @@
       "Bash(git pull:*)",
       "Bash(git stash:*)",
       "Bash(gh run watch:*)",
-      "Bash(gh release list:*)"
+      "Bash(gh release list:*)",
+      "Bash(git log:*)",
+      "Bash(gh run cancel:*)",
+      "Bash(gh issue view:*)",
+      "Bash(git checkout:*)",
+      "Bash(pip install:*)",
+      "Bash(pyenv global:*)"
     ],
     "deny": []
   }
