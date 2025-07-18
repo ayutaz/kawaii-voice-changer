@@ -105,14 +105,19 @@ select = [
     "UP",  # pyupgrade
     "ARG", # flake8-unused-arguments
     "SIM", # flake8-simplify
+    "ANN", # flake8-annotations - 型アノテーションの強制
 ]
 ignore = [
     "E501",  # line too long (handled by formatter)
     "B008",  # do not perform function calls in argument defaults
+    "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
 ]
 
 [tool.ruff.lint.isort]
 known-first-party = ["kawaii_voice_changer"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["ANN"]  # テストファイルでは型アノテーションを強制しない
 
 [tool.mypy]
 python_version = "3.12"
