@@ -91,8 +91,12 @@ jobs:
     
     - name: Install project with build dependencies
       run: |
-        # Install all dependencies including build tools
-        uv sync --all-extras
+        # Install dependencies including build tools
+        uv sync --extra build
+        
+        # List installed packages for debugging
+        echo "=== Installed packages ==="
+        uv pip list
     
     - name: Set version to nightly
       run: |
