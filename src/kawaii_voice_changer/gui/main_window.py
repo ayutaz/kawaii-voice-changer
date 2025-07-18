@@ -103,7 +103,9 @@ class MainWindow(QMainWindow):
 
         self.waveform_display = WaveformDisplay()
         self.waveform_display.setMinimumHeight(150)  # 最小高さを設定
-        self.waveform_display.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.waveform_display.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
         waveform_layout.addWidget(self.waveform_display)
 
         # Loop instructions
@@ -118,33 +120,45 @@ class MainWindow(QMainWindow):
         # Spectrum display
         self.spectrum_display = SpectrumDisplay()
         self.spectrum_display.setMinimumHeight(150)  # 最小高さを設定
-        self.spectrum_display.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.spectrum_display.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
         display_splitter.addWidget(self.spectrum_display)
 
         # Set initial sizes (60% waveform, 40% spectrum)
         display_splitter.setStretchFactor(0, 3)  # 60%
         display_splitter.setStretchFactor(1, 2)  # 40%
 
-        main_layout.addWidget(display_splitter, 1)  # stretch factor 1 for main display area
+        main_layout.addWidget(
+            display_splitter, 1
+        )  # stretch factor 1 for main display area
 
         # Parameter controls
         param_group = self._create_parameter_controls()
-        param_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+        param_group.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum
+        )
         main_layout.addWidget(param_group)
 
         # Preset controls
         preset_group = self._create_preset_controls()
-        preset_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+        preset_group.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum
+        )
         main_layout.addWidget(preset_group)
 
         # Settings slots
         slots_group = self._create_settings_slots()
-        slots_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+        slots_group.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum
+        )
         main_layout.addWidget(slots_group)
 
         # Playback controls
         self.playback_controls = PlaybackControls()
-        self.playback_controls.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+        self.playback_controls.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum
+        )
         main_layout.addWidget(self.playback_controls)
 
         # A/B comparison controls
@@ -164,7 +178,9 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout(group)
 
         self.file_label = QLabel("ファイルを選択してください")
-        self.file_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.file_label.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
+        )
         layout.addWidget(self.file_label, 1)
 
         self.open_button = QPushButton("ファイルを開く")
@@ -218,7 +234,9 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout(group)
 
         self.preset_combo = QComboBox()
-        self.preset_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.preset_combo.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
+        )
         self._update_preset_combo()
         layout.addWidget(self.preset_combo, 1)
 
