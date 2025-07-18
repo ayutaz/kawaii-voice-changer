@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   schedule:
     # Run at 2 AM UTC every day
     - cron: '0 2 * * *'
@@ -19,13 +22,13 @@ jobs:
       with:
         fetch-depth: 0
     
-    - name: Check for recent changes or push event
+    - name: Check for recent changes or push/PR event
       id: check
       run: |
-        # Always build on push events
-        if [ "${{ github.event_name }}" == "push" ]; then
+        # Always build on push and pull_request events
+        if [ "${{ github.event_name }}" == "push" ] || [ "${{ github.event_name }}" == "pull_request" ]; then
           echo "should_build=true" >> $GITHUB_OUTPUT
-          echo "Push event detected, proceeding with build"
+          echo "${{ github.event_name }} event detected, proceeding with build"
         else
           # Check if there were commits in the last 24 hours for scheduled runs
           LAST_COMMIT=$(git log -1 --format=%ct)
@@ -278,6 +281,7 @@ jobs:
 
   create-nightly-release:
     needs: nightly-build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: write
