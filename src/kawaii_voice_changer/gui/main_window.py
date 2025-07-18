@@ -100,6 +100,7 @@ class MainWindow(QMainWindow):
         waveform_layout.setContentsMargins(0, 0, 0, 0)
 
         self.waveform_display = WaveformDisplay()
+        self.waveform_display.setMinimumHeight(200)  # 最小高さを設定
         waveform_layout.addWidget(self.waveform_display)
 
         # Loop instructions
@@ -113,6 +114,7 @@ class MainWindow(QMainWindow):
 
         # Spectrum display
         self.spectrum_display = SpectrumDisplay()
+        self.spectrum_display.setMinimumHeight(200)  # 最小高さを設定
         display_splitter.addWidget(self.spectrum_display)
 
         # Set initial sizes (60% waveform, 40% spectrum)
@@ -466,7 +468,6 @@ class MainWindow(QMainWindow):
             value: New F0 ratio.
         """
         self.processor.set_f0_ratio(value)
-        self._update_formant_display()
         self._update_formant_display()
         self.parameters_changed.emit()
 
