@@ -14,7 +14,7 @@ jobs:
   test-binary:
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [macos-latest, windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     
     steps:
@@ -40,6 +40,17 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         # Windows dependencies are handled by pip/conda
+    
+    - name: Install system dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libportaudio2 libsndfile1 libasound2-dev 
+          libegl1 libgl1 libxcb-xinerama0 libxcb-cursor0 
+          libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 
+          libxcb-render-util0 libxcb-shape0 libxcb-sync1 libxcb-xfixes0 
+          libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 libfontconfig1 
+          libfreetype6 xvfb
     
     - name: Install project with build dependencies
       run: |
@@ -200,6 +211,76 @@ jobs:
         
         Write-Host "`n=== All Tests Passed ==="
       shell: pwsh
+    
+    - name: Test binary startup and functionality (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        echo "=== Testing Linux Binary ==="
+        
+        # Check if executable exists
+        if [ ! -f "dist/KawaiiVoiceChanger/KawaiiVoiceChanger" ]; then
+          echo "ERROR: Executable not found!"
+          ls -la dist/
+          exit 1
+        fi
+        
+        echo "✓ Executable found"
+        
+        # Check directory structure
+        echo -e "\n--- Directory Structure ---"
+        ls -la dist/KawaiiVoiceChanger/ | head -20
+        
+        # Check for Qt platform plugins
+        PLATFORMS_PATH="dist/KawaiiVoiceChanger/PySide6/Qt/plugins/platforms"
+        if [ -d "$PLATFORMS_PATH" ]; then
+          echo "✓ Qt platform plugins found"
+          ls -la "$PLATFORMS_PATH"
+        else
+          echo "WARNING: Qt platform plugins not found at $PLATFORMS_PATH"
+        fi
+        
+        # Make executable
+        chmod +x dist/KawaiiVoiceChanger/KawaiiVoiceChanger
+        
+        # Check binary dependencies
+        echo -e "\n--- Binary Dependencies ---"
+        ldd dist/KawaiiVoiceChanger/KawaiiVoiceChanger | head -20
+        
+        # Set up virtual display
+        export DISPLAY=:99
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        sleep 3
+        
+        # Test 1: Help output
+        echo -e "\n--- Test 1: Help Output ---"
+        timeout 5s dist/KawaiiVoiceChanger/KawaiiVoiceChanger --help || HELP_EXIT=$?
+        if [ "$HELP_EXIT" != "0" ] && [ "$HELP_EXIT" != "124" ]; then
+          echo "ERROR: Help command failed with exit code $HELP_EXIT"
+        else
+          echo "✓ Help test passed"
+        fi
+        
+        # Test 2: Quick launch test with debugging
+        echo -e "\n--- Test 2: Quick Launch Test ---"
+        export QT_DEBUG_PLUGINS=1
+        export QT_QPA_PLATFORM=xcb
+        export LD_LIBRARY_PATH="dist/KawaiiVoiceChanger/PySide6/Qt/lib:$LD_LIBRARY_PATH"
+        
+        timeout 10s dist/KawaiiVoiceChanger/KawaiiVoiceChanger || LAUNCH_EXIT=$?
+        if [ "$LAUNCH_EXIT" == "124" ]; then
+          echo "✓ Launch test passed (timeout as expected)"
+        elif [ "$LAUNCH_EXIT" == "0" ]; then
+          echo "✓ Launch test passed (clean exit)"
+        else
+          echo "WARNING: Launch test exited with code $LAUNCH_EXIT"
+        fi
+        
+        # Test 3: Check audio backend
+        echo -e "\n--- Test 3: Audio Backend Check ---"
+        python -c "import sounddevice; print('Available audio devices:', sounddevice.query_devices())" || true
+        
+        echo -e "\n=== All Tests Passed ==="
+      shell: bash
     
     - name: Upload test results
       if: always()

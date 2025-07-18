@@ -62,18 +62,57 @@ if sys.platform == 'win32':
 elif sys.platform == 'linux':
     # Include Qt platform plugins for Linux
     import PySide6
+    import sounddevice
+    import soundfile
+    
     pyside_path = Path(PySide6.__file__).parent
     qt_plugins_path = pyside_path / 'Qt' / 'plugins'
     if qt_plugins_path.exists():
+        # Essential platform plugins
         binaries.append((str(qt_plugins_path / 'platforms'), 'PySide6/Qt/plugins/platforms'))
         binaries.append((str(qt_plugins_path / 'xcbglintegrations'), 'PySide6/Qt/plugins/xcbglintegrations'))
         binaries.append((str(qt_plugins_path / 'wayland-shell-integration'), 'PySide6/Qt/plugins/wayland-shell-integration'))
         binaries.append((str(qt_plugins_path / 'wayland-graphics-integration-client'), 'PySide6/Qt/plugins/wayland-graphics-integration-client'))
         binaries.append((str(qt_plugins_path / 'wayland-decoration-client'), 'PySide6/Qt/plugins/wayland-decoration-client'))
+        
+        # Additional plugins for better Linux integration
+        if (qt_plugins_path / 'platformthemes').exists():
+            binaries.append((str(qt_plugins_path / 'platformthemes'), 'PySide6/Qt/plugins/platformthemes'))
+        if (qt_plugins_path / 'platforminputcontexts').exists():
+            binaries.append((str(qt_plugins_path / 'platforminputcontexts'), 'PySide6/Qt/plugins/platforminputcontexts'))
+        if (qt_plugins_path / 'iconengines').exists():
+            binaries.append((str(qt_plugins_path / 'iconengines'), 'PySide6/Qt/plugins/iconengines'))
+        if (qt_plugins_path / 'egldeviceintegrations').exists():
+            binaries.append((str(qt_plugins_path / 'egldeviceintegrations'), 'PySide6/Qt/plugins/egldeviceintegrations'))
+        if (qt_plugins_path / 'imageformats').exists():
+            binaries.append((str(qt_plugins_path / 'imageformats'), 'PySide6/Qt/plugins/imageformats'))
+    
+    # Include Qt libraries for Linux
+    qt_lib_path = pyside_path / 'Qt' / 'lib'
+    if qt_lib_path.exists():
+        for lib in qt_lib_path.glob('*.so*'):
+            if lib.is_file():
+                binaries.append((str(lib), 'PySide6/Qt/lib'))
+    
+    # Handle sounddevice dependencies
+    sounddevice_path = Path(sounddevice.__file__).parent
+    portaudio_path = sounddevice_path / '_sounddevice_data' / 'portaudio-binaries'
+    if portaudio_path.exists():
+        datas.append((str(portaudio_path), '_sounddevice_data/portaudio-binaries'))
+    
+    # Handle soundfile dependencies
+    soundfile_path = Path(soundfile.__file__).parent
+    soundfile_bins = soundfile_path / '_soundfile_data'
+    if soundfile_bins.exists():
+        datas.append((str(soundfile_bins), '_soundfile_data'))
 
 elif sys.platform == 'darwin':
     # macOS-specific configurations can be added here if needed
     pass
+
+# Add desktop file for Linux
+if sys.platform == 'linux':
+    datas.append(('resources/kawaii-voice-changer.desktop', '.'))
 
 a = Analysis(
     ['src/kawaii_voice_changer/__main__.py'],
@@ -104,6 +143,9 @@ a = Analysis(
         'soundfile',
         # Add Qt platform plugin imports
         'PySide6.QtDBus',
+        # Linux-specific imports for audio
+        'sounddevice._portaudio',
+        'soundfile._libname',
     ],
     hookspath=[],
     hooksconfig={},
@@ -149,8 +191,9 @@ coll = COLLECT(
     name='KawaiiVoiceChanger',
 )
 
-# For macOS, create an app bundle
+# Platform-specific bundling
 if sys.platform == 'darwin':
+    # For macOS, create an app bundle
     app = BUNDLE(
         coll,
         name='KawaiiVoiceChanger.app',
@@ -162,3 +205,7 @@ if sys.platform == 'darwin':
             'NSMicrophoneUsageDescription': 'This app requires microphone access for voice processing.',
         },
     )
+elif sys.platform == 'linux':
+    # For Linux, no additional bundling needed
+    # The desktop file will be included in the distribution
+    pass

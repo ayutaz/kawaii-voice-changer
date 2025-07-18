@@ -34,6 +34,26 @@ if hasattr(sys, "_MEIPASS"):
         # Linux-specific Qt environment
         if "QT_QPA_PLATFORM" not in os.environ:
             os.environ["QT_QPA_PLATFORM"] = "xcb"
+        
+        # Set library path for bundled libraries
+        lib_path = os.path.join(sys._MEIPASS, "PySide6", "Qt", "lib")
+        if os.path.exists(lib_path):
+            ld_library_path = os.environ.get("LD_LIBRARY_PATH", "")
+            if ld_library_path:
+                os.environ["LD_LIBRARY_PATH"] = lib_path + os.pathsep + ld_library_path
+            else:
+                os.environ["LD_LIBRARY_PATH"] = lib_path
+        
+        # Enable OpenGL integration
+        os.environ["QT_XCB_GL_INTEGRATION"] = "xcb_glx"
+        
+        # Set audio backend preference (ALSA > PulseAudio > JACK)
+        if "SDL_AUDIODRIVER" not in os.environ:
+            os.environ["SDL_AUDIODRIVER"] = "alsa,pulse,jack"
+        
+        # Disable Wayland decorations if running under Wayland
+        if os.environ.get("XDG_SESSION_TYPE") == "wayland":
+            os.environ["QT_WAYLAND_DISABLE_WINDOWDECORATION"] = "1"
     
     elif sys.platform == "darwin":
         # macOS-specific Qt environment
