@@ -91,7 +91,8 @@ jobs:
     
     - name: Install project with build dependencies
       run: |
-        uv sync --extra build
+        # Install all dependencies including build tools
+        uv sync --all-extras
     
     - name: Set version to nightly
       run: |
@@ -129,13 +130,13 @@ jobs:
     - name: Create nightly package (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        # Check if binary exists
-        if (Test-Path "dist/${{ matrix.build_name }}") {
-          Write-Host "Binary found at dist/${{ matrix.build_name }}"
-          Compress-Archive -Path "dist/${{ matrix.build_name }}" -DestinationPath "${{ matrix.artifact_name }}.zip" -Force
+        # Check if directory exists (onedir mode)
+        if (Test-Path "dist/KawaiiVoiceChanger") {
+          Write-Host "Directory found at dist/KawaiiVoiceChanger"
+          Compress-Archive -Path "dist/KawaiiVoiceChanger" -DestinationPath "${{ matrix.artifact_name }}.zip" -Force
           Write-Host "Package created: ${{ matrix.artifact_name }}.zip"
         } else {
-          Write-Error "Binary not found at dist/${{ matrix.build_name }}"
+          Write-Error "Directory not found at dist/KawaiiVoiceChanger"
           Get-ChildItem -Path dist -Recurse | Select-Object FullName
           exit 1
         }
@@ -146,16 +147,29 @@ jobs:
       run: |
         cd dist
         if [ -d "KawaiiVoiceChanger.app" ]; then
+          echo "Found app bundle"
           zip -r ../${{ matrix.artifact_name }}.zip KawaiiVoiceChanger.app
+        elif [ -d "KawaiiVoiceChanger" ]; then
+          echo "Found directory bundle"
+          zip -r ../${{ matrix.artifact_name }}.zip KawaiiVoiceChanger/
         else
-          zip ../${{ matrix.artifact_name }}.zip ${{ matrix.build_name }}
+          echo "ERROR: No bundle found!"
+          ls -la
+          exit 1
         fi
     
     - name: Create nightly package (Linux)
       if: matrix.os == 'ubuntu-latest'
       run: |
         cd dist
-        tar -czf ../${{ matrix.artifact_name }}.tar.gz ${{ matrix.build_name }}
+        if [ -d "KawaiiVoiceChanger" ]; then
+          echo "Found directory bundle"
+          tar -czf ../${{ matrix.artifact_name }}.tar.gz KawaiiVoiceChanger/
+        else
+          echo "ERROR: No bundle found!"
+          ls -la
+          exit 1
+        fi
     
     # Test binary before upload
     - name: Test binary startup (Linux)
@@ -177,15 +191,15 @@ jobs:
         export QT_QPA_PLATFORM=xcb
         
         # Test binary
-        cd dist
-        chmod +x ${{ matrix.build_name }}
+        cd dist/KawaiiVoiceChanger
+        chmod +x KawaiiVoiceChanger
         
         # First check if binary can be executed and get library dependencies
         echo "Checking binary dependencies:"
-        ldd ./${{ matrix.build_name }} || true
+        ldd ./KawaiiVoiceChanger || true
         
         # Test with timeout
-        timeout 10s ./${{ matrix.build_name }} --help || EXIT_CODE=$?
+        timeout 10s ./KawaiiVoiceChanger --help || EXIT_CODE=$?
         if [ "$EXIT_CODE" != "124" ] && [ "$EXIT_CODE" != "0" ]; then
           echo "Binary test failed with exit code: $EXIT_CODE"
           exit 1
@@ -197,16 +211,17 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         # Test binary existence and basic execution
-        if (!(Test-Path "./dist/${{ matrix.build_name }}")) {
-          Write-Error "Binary not found at ./dist/${{ matrix.build_name }}"
+        if (!(Test-Path "./dist/KawaiiVoiceChanger/KawaiiVoiceChanger.exe")) {
+          Write-Error "Binary not found at ./dist/KawaiiVoiceChanger/KawaiiVoiceChanger.exe"
+          Get-ChildItem -Path dist -Recurse | Select-Object FullName
           exit 1
         }
         
-        Write-Host "Binary found at ./dist/${{ matrix.build_name }}"
+        Write-Host "Binary found at ./dist/KawaiiVoiceChanger/KawaiiVoiceChanger.exe"
         
         # Try to start the process with --help first
         try {
-          $helpProcess = Start-Process -FilePath "./dist/${{ matrix.build_name }}" -ArgumentList "--help" -PassThru -Wait -NoNewWindow -ErrorAction Stop
+          $helpProcess = Start-Process -FilePath "./dist/KawaiiVoiceChanger/KawaiiVoiceChanger.exe" -ArgumentList "--help" -PassThru -Wait -NoNewWindow -ErrorAction Stop
           if ($helpProcess.ExitCode -eq 0) {
             Write-Host "Binary --help test passed"
           } else {
@@ -218,7 +233,7 @@ jobs:
         
         # Test GUI startup
         try {
-          $process = Start-Process -FilePath "./dist/${{ matrix.build_name }}" -PassThru -ErrorAction Stop
+          $process = Start-Process -FilePath "./dist/KawaiiVoiceChanger/KawaiiVoiceChanger.exe" -PassThru -ErrorAction Stop
           Start-Sleep -Seconds 5
           
           if ($process.HasExited) {
@@ -284,10 +299,10 @@ jobs:
           echo "Test 3: Checking binary dependencies"
           otool -L dist/KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger || true
           
-        elif [ -f "dist/${{ matrix.build_name }}" ]; then
-          echo "Found standalone binary at dist/${{ matrix.build_name }}"
-          chmod +x dist/${{ matrix.build_name }}
-          gtimeout 10s ./dist/${{ matrix.build_name }} --help || EXIT_CODE=$?
+        elif [ -d "dist/KawaiiVoiceChanger" ]; then
+          echo "Found directory bundle at dist/KawaiiVoiceChanger"
+          chmod +x dist/KawaiiVoiceChanger/KawaiiVoiceChanger
+          gtimeout 10s ./dist/KawaiiVoiceChanger/KawaiiVoiceChanger --help || EXIT_CODE=$?
           if [ "$EXIT_CODE" != "124" ] && [ "$EXIT_CODE" != "0" ]; then
             echo "Binary test failed with exit code: $EXIT_CODE"
             exit 1
