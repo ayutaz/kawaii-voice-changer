@@ -219,4 +219,4 @@ ENV/
 env/
 
 # uv
-.python-version
+.python-version.claude/
