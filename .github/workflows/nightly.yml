@@ -162,17 +162,45 @@ jobs:
     - name: Test binary startup (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        # Test binary
-        $process = Start-Process -FilePath "./dist/${{ matrix.build_name }}" -PassThru
-        Start-Sleep -Seconds 5
-        
-        if ($process.HasExited -and $process.ExitCode -ne 0) {
-          Write-Error "Binary test failed"
+        # Test binary existence and basic execution
+        if (!(Test-Path "./dist/${{ matrix.build_name }}")) {
+          Write-Error "Binary not found at ./dist/${{ matrix.build_name }}"
           exit 1
         }
         
-        if (!$process.HasExited) {
-          Stop-Process -Id $process.Id -Force
+        Write-Host "Binary found at ./dist/${{ matrix.build_name }}"
+        
+        # Try to start the process with --help first
+        try {
+          $helpProcess = Start-Process -FilePath "./dist/${{ matrix.build_name }}" -ArgumentList "--help" -PassThru -Wait -NoNewWindow -ErrorAction Stop
+          if ($helpProcess.ExitCode -eq 0) {
+            Write-Host "Binary --help test passed"
+          } else {
+            Write-Host "Binary --help returned exit code: $($helpProcess.ExitCode), continuing with GUI test"
+          }
+        } catch {
+          Write-Host "Could not run with --help, continuing with GUI test: $_"
+        }
+        
+        # Test GUI startup
+        try {
+          $process = Start-Process -FilePath "./dist/${{ matrix.build_name }}" -PassThru -ErrorAction Stop
+          Start-Sleep -Seconds 5
+          
+          if ($process.HasExited) {
+            if ($process.ExitCode -ne 0) {
+              Write-Error "Binary exited immediately with code: $($process.ExitCode)"
+              exit 1
+            }
+          } else {
+            # Process is still running, which is expected for a GUI app
+            Write-Host "Binary is running (PID: $($process.Id))"
+            Stop-Process -Id $process.Id -Force
+            Write-Host "Binary test passed - GUI started successfully"
+          }
+        } catch {
+          Write-Error "Failed to start binary: $_"
+          exit 1
         }
       shell: powershell
 
