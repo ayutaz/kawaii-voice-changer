@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QMenu,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -83,6 +84,7 @@ class MainWindow(QMainWindow):
 
         # Main layout
         main_layout = QVBoxLayout(central_widget)
+        main_layout.setSpacing(5)
 
         # File controls
         file_group = self._create_file_controls()
@@ -100,7 +102,8 @@ class MainWindow(QMainWindow):
         waveform_layout.setContentsMargins(0, 0, 0, 0)
 
         self.waveform_display = WaveformDisplay()
-        self.waveform_display.setMinimumHeight(200)  # 最小高さを設定
+        self.waveform_display.setMinimumHeight(150)  # 最小高さを設定
+        self.waveform_display.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         waveform_layout.addWidget(self.waveform_display)
 
         # Loop instructions
@@ -114,32 +117,39 @@ class MainWindow(QMainWindow):
 
         # Spectrum display
         self.spectrum_display = SpectrumDisplay()
-        self.spectrum_display.setMinimumHeight(200)  # 最小高さを設定
+        self.spectrum_display.setMinimumHeight(150)  # 最小高さを設定
+        self.spectrum_display.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         display_splitter.addWidget(self.spectrum_display)
 
         # Set initial sizes (60% waveform, 40% spectrum)
-        display_splitter.setSizes([600, 400])
+        display_splitter.setStretchFactor(0, 3)  # 60%
+        display_splitter.setStretchFactor(1, 2)  # 40%
 
-        main_layout.addWidget(display_splitter)
+        main_layout.addWidget(display_splitter, 1)  # stretch factor 1 for main display area
 
         # Parameter controls
         param_group = self._create_parameter_controls()
+        param_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         main_layout.addWidget(param_group)
 
         # Preset controls
         preset_group = self._create_preset_controls()
+        preset_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         main_layout.addWidget(preset_group)
 
         # Settings slots
         slots_group = self._create_settings_slots()
+        slots_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         main_layout.addWidget(slots_group)
 
         # Playback controls
         self.playback_controls = PlaybackControls()
+        self.playback_controls.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         main_layout.addWidget(self.playback_controls)
 
         # A/B comparison controls
         ab_group = self._create_ab_comparison_controls()
+        ab_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         main_layout.addWidget(ab_group)
 
         # Menu bar
@@ -154,9 +164,8 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout(group)
 
         self.file_label = QLabel("ファイルを選択してください")
-        layout.addWidget(self.file_label)
-
-        layout.addStretch()
+        self.file_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        layout.addWidget(self.file_label, 1)
 
         self.open_button = QPushButton("ファイルを開く")
         self.open_button.clicked.connect(self._open_file)
@@ -209,14 +218,13 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout(group)
 
         self.preset_combo = QComboBox()
+        self.preset_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self._update_preset_combo()
-        layout.addWidget(self.preset_combo)
+        layout.addWidget(self.preset_combo, 1)
 
         apply_button = QPushButton("適用")
         apply_button.clicked.connect(self._apply_preset)
         layout.addWidget(apply_button)
-
-        layout.addStretch()
 
         save_button = QPushButton("保存")
         save_button.clicked.connect(self._save_preset)
@@ -250,7 +258,10 @@ class MainWindow(QMainWindow):
         """)
         layout.addWidget(self.ab_indicator)
 
-        layout.addStretch()
+        # Spacer widget
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        layout.addWidget(spacer)
 
         # Keyboard shortcut hint
         hint_label = QLabel("ヒント: Aキーで切り替え")
@@ -288,7 +299,10 @@ class MainWindow(QMainWindow):
         # Select first slot by default
         self.slot_buttons[0].setChecked(True)
 
-        layout.addStretch()
+        # Spacer widget
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        layout.addWidget(spacer)
 
         # Hint
         hint = QLabel("ヒント: 右クリックで保存/クリア")

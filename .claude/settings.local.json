@@ -35,7 +35,9 @@
       "Bash(git checkout:*)",
       "Bash(pip install:*)",
       "Bash(pyenv global:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(poetry run:*)",
+      "Bash(open dist/KawaiiVoiceChanger.app)"
     ],
     "deny": []
   }
