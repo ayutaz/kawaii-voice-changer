@@ -14,9 +14,52 @@ if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
 else:
     base_path = os.path.abspath('.')
 
-# Additional binaries for Linux Qt support
+# Platform-specific binaries and data files
 binaries = []
-if sys.platform == 'linux':
+datas = []
+
+if sys.platform == 'win32':
+    # Windows-specific configurations
+    import PySide6
+    import sounddevice
+    import soundfile
+    
+    pyside_path = Path(PySide6.__file__).parent
+    
+    # Include Qt platform plugins for Windows
+    qt_plugins_path = pyside_path / 'Qt' / 'plugins'
+    if qt_plugins_path.exists():
+        binaries.append((str(qt_plugins_path / 'platforms'), 'PySide6/Qt/plugins/platforms'))
+        binaries.append((str(qt_plugins_path / 'styles'), 'PySide6/Qt/plugins/styles'))
+        binaries.append((str(qt_plugins_path / 'imageformats'), 'PySide6/Qt/plugins/imageformats'))
+    
+    # Include Qt6 DLLs
+    qt_bin_path = pyside_path / 'Qt' / 'bin'
+    if qt_bin_path.exists():
+        for dll in qt_bin_path.glob('*.dll'):
+            binaries.append((str(dll), 'PySide6/Qt/bin'))
+    
+    # Handle sounddevice PortAudio dependency
+    sounddevice_path = Path(sounddevice.__file__).parent
+    portaudio_path = sounddevice_path / '_sounddevice_data' / 'portaudio-binaries'
+    if portaudio_path.exists():
+        datas.append((str(portaudio_path), '_sounddevice_data/portaudio-binaries'))
+    
+    # Handle soundfile dependencies
+    soundfile_path = Path(soundfile.__file__).parent
+    soundfile_bins = soundfile_path / '_soundfile_data'
+    if soundfile_bins.exists():
+        datas.append((str(soundfile_bins), '_soundfile_data'))
+    
+    # Include Visual C++ runtime if needed
+    import sysconfig
+    python_dll_path = Path(sysconfig.get_paths()['data']) / 'DLLs'
+    for vcruntime in python_dll_path.glob('vcruntime*.dll'):
+        binaries.append((str(vcruntime), '.'))
+    for msvcp in python_dll_path.glob('msvcp*.dll'):
+        binaries.append((str(msvcp), '.'))
+
+elif sys.platform == 'linux':
     # Include Qt platform plugins for Linux
     import PySide6
     pyside_path = Path(PySide6.__file__).parent
@@ -28,13 +71,15 @@ if sys.platform == 'linux':
         binaries.append((str(qt_plugins_path / 'wayland-graphics-integration-client'), 'PySide6/Qt/plugins/wayland-graphics-integration-client'))
         binaries.append((str(qt_plugins_path / 'wayland-decoration-client'), 'PySide6/Qt/plugins/wayland-decoration-client'))
 
+elif sys.platform == 'darwin':
+    # macOS-specific configurations can be added here if needed
+    pass
+
 a = Analysis(
     ['src/kawaii_voice_changer/__main__.py'],
     pathex=[],
     binaries=binaries,
-    datas=[
-        # Add any data files here if needed
-    ],
+    datas=datas,
     hiddenimports=[
         'pyworld',
         'scipy.signal',
@@ -44,6 +89,7 @@ a = Analysis(
         'scipy.linalg',
         'scipy.sparse',
         'scipy.special',
+        'scipy.special._cdflib',  # Fix for SciPy 1.13.0+ compatibility
         'scipy._lib',
         'scipy._lib.messagestream',
         'numpy',

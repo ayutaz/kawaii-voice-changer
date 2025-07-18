@@ -6,12 +6,16 @@ on:
       - 'kawaii_voice_changer.spec'
       - 'pyproject.toml'
       - 'src/**'
+      - 'runtime_hook.py'
       - '.github/workflows/test-binary.yml'
   workflow_dispatch:
 
 jobs:
-  test-macos-binary:
-    runs-on: macos-latest
+  test-binary:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     
     steps:
     - uses: actions/checkout@v4
@@ -27,9 +31,15 @@ jobs:
       with:
         python-version: '3.12'
     
-    - name: Install system dependencies
+    - name: Install system dependencies (macOS)
+      if: runner.os == 'macOS'
       run: |
         brew install portaudio libsndfile coreutils
+    
+    - name: Install system dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        # Windows dependencies are handled by pip/conda
     
     - name: Install project with build dependencies
       run: |
@@ -39,7 +49,8 @@ jobs:
       run: |
         uv run pyinstaller kawaii_voice_changer.spec --clean
     
-    - name: Test binary startup and functionality
+    - name: Test binary startup and functionality (macOS)
+      if: runner.os == 'macOS'
       run: |
         echo "=== Testing macOS Binary ==="
         
@@ -122,11 +133,79 @@ jobs:
         echo -e "\n=== All Tests Passed ==="
       shell: bash
     
+    - name: Test binary startup and functionality (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        Write-Host "=== Testing Windows Binary ==="
+        
+        # Check if executable exists
+        if (-not (Test-Path "dist\KawaiiVoiceChanger\KawaiiVoiceChanger.exe")) {
+          Write-Error "ERROR: Executable not found!"
+          Get-ChildItem -Path dist -Recurse
+          exit 1
+        }
+        
+        Write-Host "✓ Executable found"
+        
+        # Check directory structure
+        Write-Host "`n--- Directory Structure ---"
+        Get-ChildItem -Path "dist\KawaiiVoiceChanger" -Recurse | Select-Object -First 20
+        
+        # Check for Qt platform plugins
+        $platformsPath = "dist\KawaiiVoiceChanger\PySide6\Qt\plugins\platforms"
+        if (Test-Path $platformsPath) {
+          Write-Host "✓ Qt platform plugins found"
+          Get-ChildItem -Path $platformsPath
+        } else {
+          Write-Warning "Qt platform plugins not found at $platformsPath"
+        }
+        
+        # Test 1: Help output
+        Write-Host "`n--- Test 1: Help Output ---"
+        $helpProcess = Start-Process -FilePath "dist\KawaiiVoiceChanger\KawaiiVoiceChanger.exe" -ArgumentList "--help" -NoNewWindow -PassThru -Wait
+        if ($helpProcess.ExitCode -eq 0) {
+          Write-Host "✓ Help test passed"
+        } else {
+          Write-Warning "Help test failed with exit code $($helpProcess.ExitCode)"
+        }
+        
+        # Test 2: Quick launch test
+        Write-Host "`n--- Test 2: Quick Launch Test ---"
+        $env:QT_QPA_PLATFORM = "offscreen"
+        $process = Start-Process -FilePath "dist\KawaiiVoiceChanger\KawaiiVoiceChanger.exe" -NoNewWindow -PassThru
+        Start-Sleep -Seconds 5
+        
+        if ($process.HasExited) {
+          if ($process.ExitCode -eq 0) {
+            Write-Host "✓ Launch test passed (clean exit)"
+          } else {
+            Write-Error "Launch test failed with exit code $($process.ExitCode)"
+            # Check Windows Event Log for crashes
+            Get-EventLog -LogName Application -Newest 10 | Where-Object {$_.Message -like "*KawaiiVoiceChanger*"}
+            exit 1
+          }
+        } else {
+          Stop-Process -Id $process.Id -Force
+          Write-Host "✓ Launch test passed (process started successfully)"
+        }
+        
+        # Test 3: Check dependencies
+        Write-Host "`n--- Test 3: Checking Dependencies ---"
+        $dumpbin = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64\dumpbin.exe"
+        if (Test-Path $dumpbin) {
+          & $dumpbin /dependents "dist\KawaiiVoiceChanger\KawaiiVoiceChanger.exe" | Select-Object -First 30
+        } else {
+          Write-Host "dumpbin not found, skipping dependency check"
+        }
+        
+        Write-Host "`n=== All Tests Passed ==="
+      shell: pwsh
+    
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: macos-binary-test-results
+        name: ${{ matrix.os }}-binary-test-results
         path: |
           dist/
           ~/Library/Logs/DiagnosticReports/*KawaiiVoiceChanger*
