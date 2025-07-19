@@ -122,10 +122,7 @@ uv run pytest tests/test_audio_processor.py
 
 ## 📚 Documentation
 
-- [Requirements Specification](docs/specifications/requirements-specification.md)
-- [Technical Selection](docs/technical-decisions/technical-selection.md)
-- [GUI Framework Comparison](docs/technical-decisions/gui-framework-comparison.md)
-- [Kawaii Voice Research Report](docs/technical-decisions/kawaii-voice-research-report.md)
+- [Kawaii Voice Research Report](docs/technical-decisions/kawaii-voice-research-report.md) - About acoustic characteristics of "kawaii voice"
 
 ## 🤝 Contributing
 
