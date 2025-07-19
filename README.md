@@ -124,10 +124,7 @@ uv run pytest tests/test_audio_processor.py
 
 ## 📚 ドキュメント
 
-- [要件定義書](docs/requirements-specification.md)
-- [技術選定書](docs/technical-selection.md)
-- [開発計画書](docs/development-plan.md)
-- [残タスク一覧](docs/remaining-tasks.md) 🆕
+- [かわいい声の研究レポート](docs/technical-decisions/kawaii-voice-research-report.md) - 「かわいい声」の音響特性について
 
 ## 🤝 コントリビュート
 
