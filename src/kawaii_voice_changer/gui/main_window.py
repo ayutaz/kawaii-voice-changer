@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 
 from ..core import PRESETS, AudioPlayer, AudioProcessor, PresetManager, SettingsManager
 from ..utils import Config, setup_logger
-from .dialogs import PresetDialog
+from .dialogs import PresetDialog, RecordingDialog
 from .widgets import ParameterSlider, PlaybackControls, SpectrumDisplay, WaveformDisplay
 
 if TYPE_CHECKING:
@@ -186,6 +186,12 @@ class MainWindow(QMainWindow):
         self.open_button = QPushButton("ファイルを開く")
         self.open_button.clicked.connect(self._open_file)
         layout.addWidget(self.open_button)
+
+        # Add recording button
+        self.recording_button = QPushButton("🎤 録音")
+        self.recording_button.clicked.connect(self._open_recording_dialog)
+        self.recording_button.setToolTip("マイクから音声を録音します (Ctrl+R)")
+        layout.addWidget(self.recording_button)
 
         return group
 
@@ -369,6 +375,14 @@ class MainWindow(QMainWindow):
         advanced_action.setCheckable(True)
         advanced_action.setChecked(self.config.show_advanced_controls)
         view_menu.addAction(advanced_action)
+
+        # Tools menu
+        tools_menu = menubar.addMenu("ツール")
+
+        recording_action = QAction("録音...", self)
+        recording_action.setShortcut("Ctrl+R")
+        recording_action.triggered.connect(self._open_recording_dialog)
+        tools_menu.addAction(recording_action)
 
         # Help menu
         help_menu = menubar.addMenu("ヘルプ")
@@ -726,6 +740,30 @@ class MainWindow(QMainWindow):
             "Based on: Finding Kawaii (arXiv:2507.06235)\n"
             "GitHub: https://github.com/ayutaz/kawaii-voice-changer",
         )
+
+    def _open_recording_dialog(self) -> None:
+        """Open recording dialog."""
+        dialog = RecordingDialog(self)
+        dialog.recording_completed.connect(self._on_recording_completed)
+        dialog.show()
+
+    def _on_recording_completed(self, file_path: Path) -> None:
+        """Handle completed recording.
+
+        Args:
+            file_path: Path to recorded file.
+        """
+        # Ask user if they want to load the recorded file
+        reply = QMessageBox.question(
+            self,
+            "録音完了",
+            f"録音が完了しました。\n{file_path}\n\nこのファイルを読み込みますか？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            self._load_file(file_path)
 
     def _update_displays(self) -> None:
         """Update display widgets."""
