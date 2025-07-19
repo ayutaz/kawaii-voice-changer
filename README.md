@@ -1,5 +1,7 @@
 # Kawaii Voice Changer 🎤
 
+[English](README.en.md) | 日本語
+
 [![CI](https://github.com/ayutaz/kawaii-voice-changer/actions/workflows/ci.yml/badge.svg)](https://github.com/ayutaz/kawaii-voice-changer/actions/workflows/ci.yml)
 [![Release](https://github.com/ayutaz/kawaii-voice-changer/actions/workflows/release.yml/badge.svg)](https://github.com/ayutaz/kawaii-voice-changer/actions/workflows/release.yml)
 [![Nightly Build](https://github.com/ayutaz/kawaii-voice-changer/actions/workflows/nightly.yml/badge.svg)](https://github.com/ayutaz/kawaii-voice-changer/actions/workflows/nightly.yml)
