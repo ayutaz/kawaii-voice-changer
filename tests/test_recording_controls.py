@@ -122,9 +122,7 @@ class TestRecordingControls:
         recording_controls.recorder.state = RecorderState.IDLE
 
         # Click record button
-        qtbot.mouseClick(
-            recording_controls.record_button, Qt.MouseButton.LeftButton
-        )
+        qtbot.mouseClick(recording_controls.record_button, Qt.MouseButton.LeftButton)
 
         # Update state manually
         recording_controls.recorder.state = RecorderState.RECORDING

@@ -143,13 +143,13 @@ class TestAudioRecorder:
 
         # Start recording
         output_file = recorder.start_recording(temp_dir)
-        
+
         # Add some fake recording data after starting
         recorder._recording_data = [
             np.random.rand(1024).astype(np.float32),
             np.random.rand(1024).astype(np.float32),
         ]
-        
+
         # Stop recording
         saved_file = recorder.stop_recording(output_file)
 

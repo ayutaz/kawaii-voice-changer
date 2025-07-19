@@ -759,7 +759,7 @@ class MainWindow(QMainWindow):
             "録音完了",
             f"録音が完了しました。\n{file_path}\n\nこのファイルを読み込みますか？",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes
+            QMessageBox.StandardButton.Yes,
         )
 
         if reply == QMessageBox.StandardButton.Yes:

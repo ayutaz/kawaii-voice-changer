@@ -83,13 +83,15 @@ class AudioRecorder:
         devices = []
         for i, device in enumerate(sd.query_devices()):
             if device["max_input_channels"] > 0:
-                devices.append({
-                    "index": i,
-                    "name": device["name"],
-                    "channels": device["max_input_channels"],
-                    "sample_rate": device["default_samplerate"],
-                    "is_default": i == sd.default.device[0],
-                })
+                devices.append(
+                    {
+                        "index": i,
+                        "name": device["name"],
+                        "channels": device["max_input_channels"],
+                        "sample_rate": device["default_samplerate"],
+                        "is_default": i == sd.default.device[0],
+                    }
+                )
         return devices
 
     def set_level_callback(self, callback: Callable[[float], None] | None) -> None:
@@ -144,7 +146,9 @@ class AudioRecorder:
                     dtype=self.settings.dtype,
                     device=self.settings.device,
                     callback=self._audio_callback,
-                    blocksize=int(self.settings.sample_rate * self.settings.block_duration),
+                    blocksize=int(
+                        self.settings.sample_rate * self.settings.block_duration
+                    ),
                 )
                 self._stream.start()
                 self.state = RecorderState.RECORDING

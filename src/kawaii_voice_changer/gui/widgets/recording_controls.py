@@ -261,8 +261,12 @@ class RecordingControls(QWidget):
             # Apply settings
             device_index = self.device_combo.currentData()
             self.recorder.settings.device = device_index
-            self.recorder.settings.sample_rate = int(self.sample_rate_combo.currentText())
-            self.recorder.settings.channels = 1 if self.channel_combo.currentIndex() == 0 else 2
+            self.recorder.settings.sample_rate = int(
+                self.sample_rate_combo.currentText()
+            )
+            self.recorder.settings.channels = (
+                1 if self.channel_combo.currentIndex() == 0 else 2
+            )
 
             # Start recording
             output_dir = Path(self.output_dir_label.text())
@@ -274,7 +278,9 @@ class RecordingControls(QWidget):
                 self.recording_state_changed.emit(RecorderState.RECORDING)
                 logger.info(f"Started recording to {self.current_output_file}")
             else:
-                QMessageBox.warning(self, "Recording Error", "Failed to start recording")
+                QMessageBox.warning(
+                    self, "Recording Error", "Failed to start recording"
+                )
 
         elif self.recorder.state == RecorderState.PAUSED:
             # Resume recording
@@ -300,9 +306,7 @@ class RecordingControls(QWidget):
             self.recording_stopped.emit(saved_file)
             self.recording_state_changed.emit(RecorderState.IDLE)
             QMessageBox.information(
-                self,
-                "Recording Saved",
-                f"Recording saved to:\n{saved_file}"
+                self, "Recording Saved", f"Recording saved to:\n{saved_file}"
             )
             logger.info(f"Stopped recording, saved to {saved_file}")
 
@@ -318,7 +322,7 @@ class RecordingControls(QWidget):
             self,
             "Select Output Directory",
             str(current_dir),
-            QFileDialog.Option.ShowDirsOnly
+            QFileDialog.Option.ShowDirsOnly,
         )
 
         if new_dir:
