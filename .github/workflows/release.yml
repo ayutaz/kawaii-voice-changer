@@ -71,23 +71,52 @@ jobs:
 
     - name: List build output
       run: |
+        echo "Contents of dist directory:"
         ls -la dist/
+        echo "Looking for executable:"
+        find dist -name "KawaiiVoiceChanger*" -type f -o -name "KawaiiVoiceChanger*" -type d | head -20
       shell: bash
 
     - name: Create distribution package
       run: |
         cd dist
+        echo "Current directory: $(pwd)"
+        echo "Files in current directory:"
+        ls -la
+        
         if [ "${{ matrix.os }}" == "windows-latest" ]; then
-          7z a -tzip ../${{ matrix.artifact_name }}${{ matrix.package_ext }} ${{ matrix.build_name }}
+          # Check if the executable exists
+          if [ -f "${{ matrix.build_name }}" ]; then
+            echo "Found ${{ matrix.build_name }}, creating package..."
+            7z a -tzip ../${{ matrix.artifact_name }}${{ matrix.package_ext }} ${{ matrix.build_name }}
+          else
+            echo "ERROR: ${{ matrix.build_name }} not found!"
+            exit 1
+          fi
         elif [ "${{ matrix.os }}" == "macos-latest" ]; then
           if [ -d "KawaiiVoiceChanger.app" ]; then
+            echo "Found KawaiiVoiceChanger.app, creating package..."
             zip -r ../${{ matrix.artifact_name }}${{ matrix.package_ext }} KawaiiVoiceChanger.app
-          else
+          elif [ -f "${{ matrix.build_name }}" ]; then
+            echo "Found ${{ matrix.build_name }}, creating package..."
             zip -r ../${{ matrix.artifact_name }}${{ matrix.package_ext }} ${{ matrix.build_name }}
+          else
+            echo "ERROR: Neither KawaiiVoiceChanger.app nor ${{ matrix.build_name }} found!"
+            exit 1
           fi
         else
-          tar -czf ../${{ matrix.artifact_name }}${{ matrix.package_ext }} ${{ matrix.build_name }}
+          # Linux
+          if [ -f "${{ matrix.build_name }}" ]; then
+            echo "Found ${{ matrix.build_name }}, creating package..."
+            tar -czf ../${{ matrix.artifact_name }}${{ matrix.package_ext }} ${{ matrix.build_name }}
+          else
+            echo "ERROR: ${{ matrix.build_name }} not found!"
+            exit 1
+          fi
         fi
+        
+        echo "Package created successfully"
+        ls -la ../
       shell: bash
 
     # Test binary before upload
