@@ -21,18 +21,21 @@ jobs:
             name: Linux
             artifact_name: KawaiiVoiceChanger-Linux
             build_name: KawaiiVoiceChanger
+            build_dir: KawaiiVoiceChanger
             package_ext: .tar.gz
             package_cmd: tar -czf
           - os: windows-latest
             name: Windows
             artifact_name: KawaiiVoiceChanger-Windows
             build_name: KawaiiVoiceChanger.exe
+            build_dir: KawaiiVoiceChanger
             package_ext: .zip
             package_cmd: 7z a -tzip
           - os: macos-latest
             name: macOS
             artifact_name: KawaiiVoiceChanger-macOS
-            build_name: KawaiiVoiceChanger
+            build_name: KawaiiVoiceChanger.app
+            build_dir: KawaiiVoiceChanger.app
             package_ext: .zip
             package_cmd: zip -r
 
@@ -85,32 +88,29 @@ jobs:
         ls -la
         
         if [ "${{ matrix.os }}" == "windows-latest" ]; then
-          # Check if the executable exists
-          if [ -f "${{ matrix.build_name }}" ]; then
-            echo "Found ${{ matrix.build_name }}, creating package..."
-            7z a -tzip ../${{ matrix.artifact_name }}${{ matrix.package_ext }} ${{ matrix.build_name }}
+          # Check if the build directory exists
+          if [ -d "${{ matrix.build_dir }}" ]; then
+            echo "Found ${{ matrix.build_dir }} directory, creating package..."
+            7z a -tzip ../${{ matrix.artifact_name }}${{ matrix.package_ext }} ${{ matrix.build_dir }}
           else
-            echo "ERROR: ${{ matrix.build_name }} not found!"
+            echo "ERROR: ${{ matrix.build_dir }} directory not found!"
             exit 1
           fi
         elif [ "${{ matrix.os }}" == "macos-latest" ]; then
-          if [ -d "KawaiiVoiceChanger.app" ]; then
-            echo "Found KawaiiVoiceChanger.app, creating package..."
-            zip -r ../${{ matrix.artifact_name }}${{ matrix.package_ext }} KawaiiVoiceChanger.app
-          elif [ -f "${{ matrix.build_name }}" ]; then
-            echo "Found ${{ matrix.build_name }}, creating package..."
-            zip -r ../${{ matrix.artifact_name }}${{ matrix.package_ext }} ${{ matrix.build_name }}
+          if [ -d "${{ matrix.build_dir }}" ]; then
+            echo "Found ${{ matrix.build_dir }} directory, creating package..."
+            zip -r ../${{ matrix.artifact_name }}${{ matrix.package_ext }} ${{ matrix.build_dir }}
           else
-            echo "ERROR: Neither KawaiiVoiceChanger.app nor ${{ matrix.build_name }} found!"
+            echo "ERROR: ${{ matrix.build_dir }} directory not found!"
             exit 1
           fi
         else
           # Linux
-          if [ -f "${{ matrix.build_name }}" ]; then
-            echo "Found ${{ matrix.build_name }}, creating package..."
-            tar -czf ../${{ matrix.artifact_name }}${{ matrix.package_ext }} ${{ matrix.build_name }}
+          if [ -d "${{ matrix.build_dir }}" ]; then
+            echo "Found ${{ matrix.build_dir }} directory, creating package..."
+            tar -czf ../${{ matrix.artifact_name }}${{ matrix.package_ext }} ${{ matrix.build_dir }}
           else
-            echo "ERROR: ${{ matrix.build_name }} not found!"
+            echo "ERROR: ${{ matrix.build_dir }} directory not found!"
             exit 1
           fi
         fi
@@ -139,7 +139,7 @@ jobs:
         export QT_QPA_PLATFORM=xcb
         
         # Test binary
-        cd dist
+        cd dist/${{ matrix.build_dir }}
         chmod +x ${{ matrix.build_name }}
         
         # First check if binary can be executed and get library dependencies
@@ -159,10 +159,10 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         # Test binary
-        Start-Process -FilePath "./dist/${{ matrix.build_name }}" -ArgumentList "--help" -Wait -NoNewWindow -PassThru -ErrorAction SilentlyContinue | Out-Null
+        Start-Process -FilePath "./dist/${{ matrix.build_dir }}/${{ matrix.build_name }}" -ArgumentList "--help" -Wait -NoNewWindow -PassThru -ErrorAction SilentlyContinue | Out-Null
         
         # Quick startup test
-        $process = Start-Process -FilePath "./dist/${{ matrix.build_name }}" -PassThru
+        $process = Start-Process -FilePath "./dist/${{ matrix.build_dir }}/${{ matrix.build_name }}" -PassThru
         Start-Sleep -Seconds 5
         
         if ($process.HasExited -and $process.ExitCode -ne 0) {
@@ -182,10 +182,11 @@ jobs:
         brew install coreutils
         
         # Test binary
-        if [ -d "dist/KawaiiVoiceChanger.app" ]; then
-          gtimeout 10s ./dist/KawaiiVoiceChanger.app/Contents/MacOS/KawaiiVoiceChanger --help || EXIT_CODE=$?
+        if [ -d "dist/${{ matrix.build_dir }}" ]; then
+          gtimeout 10s ./dist/${{ matrix.build_dir }}/Contents/MacOS/KawaiiVoiceChanger --help || EXIT_CODE=$?
         else
-          gtimeout 10s ./dist/${{ matrix.build_name }} --help || EXIT_CODE=$?
+          echo "ERROR: ${{ matrix.build_dir }} not found!"
+          exit 1
         fi
         
         if [ "$EXIT_CODE" != "124" ] && [ "$EXIT_CODE" != "0" ]; then
