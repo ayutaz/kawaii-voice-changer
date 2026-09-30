@@ -24,7 +24,9 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install ruff
+        # Pin to the version locked in uv.lock so this job matches `uv run ruff` in ci.yml.
+        # Newer ruff releases also format Markdown code blocks under docs/, which would fail --check.
+        pip install "ruff==0.12.3"
     
     - name: Run Ruff format check
       run: |
