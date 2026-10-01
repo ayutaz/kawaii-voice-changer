@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .. import __version__
 from ..core import PRESETS, AudioPlayer, AudioProcessor, PresetManager, SettingsManager
 from ..utils import Config, setup_logger
 from .dialogs import PresetDialog, RecordingDialog
@@ -734,10 +735,10 @@ class MainWindow(QMainWindow):
         QMessageBox.about(
             self,
             "Kawaii Voice Changerについて",
-            "Kawaii Voice Changer v0.1.0\n\n"
+            f"Kawaii Voice Changer v{__version__}\n\n"
             "基本周波数とフォルマント周波数を調整して\n"
             "「可愛い声」のスイートスポットを見つけるアプリケーション\n\n"
-            "Based on: Finding Kawaii (arXiv:2507.06235)\n"
+            "Based on: Super Kawaii Vocalics (arXiv:2507.06235)\n"
             "GitHub: https://github.com/ayutaz/kawaii-voice-changer",
         )
 
